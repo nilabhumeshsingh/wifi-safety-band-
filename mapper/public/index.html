@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiFi Signal Mapper — Campus SOS</title>
+  <meta name="description" content="Map WiFi access point signals to campus locations for the SOS device">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-icon">📡</div>
+      <h1>WiFi <span>Signal Mapper</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="stats-badge">
+        <span class="dot"></span>
+        <span id="total-mapped">0</span> locations mapped
+      </div>
+      <a href="/api/export/csv" class="btn btn-outline btn-sm" download>⬇ Export CSV</a>
+      <a href="/api/export/sos" target="_blank" class="btn btn-outline btn-sm">📋 SOS Export</a>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- LEFT: Scan & Network List -->
+    <section class="scan-section">
+      <div class="scan-controls">
+        <button id="scan-btn" class="btn btn-primary">📡 Scan WiFi</button>
+        <span id="scan-status" class="scan-status">Press "Scan WiFi" to detect nearby access points</span>
+
+        <div class="filter-tabs">
+          <button class="filter-tab" data-filter="all">All</button>
+          <button class="filter-tab active" data-filter="campus">Campus</button>
+          <button class="filter-tab" data-filter="other">Other</button>
+        </div>
+      </div>
+
+      <div id="network-list" class="network-list">
+        <div class="empty-state">
+          <div class="icon">📡</div>
+          <p>No networks scanned yet.<br>Click <strong>"Scan WiFi"</strong> to detect nearby access points.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Sidebar -->
+    <aside class="sidebar">
+
+      <!-- Tag Location Form -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📍</span> Tag This Location</div>
+        
+        <div id="scan-summary" class="scan-summary" style="display: none;"></div>
+        
+        <div class="form-group">
+          <label for="room-input">Room Number *</label>
+          <input type="text" id="room-input" placeholder="e.g., 301, Lab-A2, Corridor-3F">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="building-input">Building</label>
+            <input type="text" id="building-input" placeholder="e.g., Block A">
+          </div>
+          <div class="form-group">
+            <label for="floor-input">Floor</label>
+            <input type="text" id="floor-input" placeholder="e.g., 3">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="desc-input">Description (optional)</label>
+          <textarea id="desc-input" placeholder="e.g., Near the staircase, left corridor"></textarea>
+        </div>
+
+        <button id="save-btn" class="btn btn-success" disabled style="width: 100%;">💾 Save Mapping</button>
+      </div>
+
+      <!-- Saved Mappings -->
+      <div class="card" style="max-height: 500px; overflow-y: auto;">
+        <div class="card-title"><span class="icon">🗺️</span> Saved Mappings</div>
+        <div id="mappings-list"></div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

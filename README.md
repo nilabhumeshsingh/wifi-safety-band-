@@ -37,7 +37,7 @@ The device is built around **Wi-Fi positioning (Wi-Fi BSSID scanning)** rather t
 ### Software & Cloud Infrastructure
 
 * **Firmware Runtime:** C++ / Arduino Framework for ESP
-* **Frontend Dashboard:** React.js, HTML5, CSS3, JavaScript (ES6+)
+* **Frontend Dashboard:** React.js, HTML5, CSS3, JavaScript
 * **Backend Services:** Node.js + Express.js, and FastAPI
 * **Database:** Supabase
 

@@ -19,7 +19,7 @@
     <img src="logo.png" alt="CIS Security" class="brand-logo">
     <div>
       <div class="brand-name">CIS Security</div>
-      <div class="brand-sub">4th Floor Campus Plan (AB2)</div>
+      <div class="brand-sub">3rd & 4th Floor Campus Plan (AB2)</div>
     </div>
   </div>
   <div class="header-actions">
@@ -33,7 +33,17 @@
     <!-- TOP SECTION: ALERTS -->
     <div class="card">
       <div class="top-row">
-        <div class="section-title">Active Alerts Feed</div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div class="section-title">Active Alerts Feed</div>
+          <div class="view-segmented-control">
+            <button id="alert-tab-recent" class="segmented-btn active" onclick="toggleAlertHistoryMode(false)">
+              ⚡ Recent (5)
+            </button>
+            <button id="alert-tab-history" class="segmented-btn" onclick="toggleAlertHistoryMode(true)">
+              📜 Full History (<span id="history-total-count">0</span>)
+            </button>
+          </div>
+        </div>
         <div id="active-count" class="count-pill">0 active</div>
       </div>
       <div id="alert-feed"></div>
@@ -66,6 +76,11 @@
 
         <!-- 3D TOOLBAR CONTROLS -->
         <div id="3d-toolbar" class="toolbar-3d">
+          <div class="view-segmented-control" style="margin-right: 8px;">
+            <button id="btn-fl-all" class="segmented-btn active" onclick="filterFloor('all')">🏢 Both Floors</button>
+            <button id="btn-fl-4" class="segmented-btn" onclick="filterFloor('4')">⬆️ 4th Floor</button>
+            <button id="btn-fl-3" class="segmented-btn" onclick="filterFloor('3')">⬇️ 3rd Floor</button>
+          </div>
           <button class="tool-btn" onclick="focusActiveAlert()" title="Focus Camera on Active Alert">🎯 Focus Alert</button>
           <button class="tool-btn" onclick="toggleWallHeight()" title="Toggle Wall Height">🧱 Walls: <span id="wall-height-label">Full</span></button>
           <button class="tool-btn" onclick="toggleWireframe()" title="Wireframe View">🕸️ Wireframe</button>

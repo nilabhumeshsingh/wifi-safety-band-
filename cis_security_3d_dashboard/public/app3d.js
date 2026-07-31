@@ -2,16 +2,13 @@
 // NIGHTGUARD 3D VECTOR FLOOR PLAN ENGINE (Three.js)
 // =========================================================================
 
-// --- 1. ROOM LAYOUT DATASET (Light Blue Theme Aesthetic) ---
-const roomsData = [
+// --- 1. ROOM LAYOUT DATASET (3rd & 4th Floor Stacked Layout) ---
+const baseRoomsData = [
   // Outer Main Corridors (Building Frame)
   { id: 'corridor-top',    name: 'MAIN CORRIDOR', x: 0,    z: -8.5, w: 32,   d: 2.5, color: 0x1E293B, isCorridor: true },
   { id: 'corridor-left',   name: 'MAIN CORRIDOR', x: -12.5, z: 0,    w: 2.5,  d: 19.5, color: 0x1E293B, isCorridor: true },
   { id: 'corridor-right',  name: 'MAIN CORRIDOR', x: 12.5,  z: 0,    w: 2.5,  d: 19.5, color: 0x1E293B, isCorridor: true },
   { id: 'corridor-bottom', name: 'MAIN CORRIDOR', x: 0,    z: 8.5,  w: 32,   d: 2.5, color: 0x1E293B, isCorridor: true },
-
-  // Central Open Courtyard
-  { id: 'courtyard', name: 'CENTRAL OPEN COURTYARD', x: 0, z: 0, w: 22.5, d: 14.5, color: 0xE6F0FF, isCourtyard: true },
 
   // Top Section
   { id: '401', name: '401\nStairs', x: -20,   z: -12.5, w: 6.5, d: 6.5, color: 0x334155, isUtility: true },
@@ -51,22 +48,66 @@ const roomsData = [
   { id: '414', name: '414', x: 24.9, z: 15.0, w: 6.2, d: 4.2, color: 0x0F172A }
 ];
 
+// Dynamically construct combined 3rd and 4th Floor room dataset
+const roomsData = [];
+
+// Ground Courtyard
+roomsData.push({ id: 'courtyard', name: 'CENTRAL OPEN COURTYARD', x: 0, z: 0, w: 22.5, d: 14.5, color: 0xE6F0FF, isCourtyard: true, floor: 'ground', yLevel: 0 });
+
+// Floor 3 Rooms (Base Elevation y = 0.0)
+baseRoomsData.forEach(r => {
+  let f3Id = r.id;
+  let f3Name = r.name;
+  if (r.id.startsWith('4')) {
+    f3Id = '3' + r.id.substring(1);
+    f3Name = f3Id;
+    if (r.name.includes('\n')) f3Name += r.name.substring(r.name.indexOf('\n'));
+  } else if (!r.id.startsWith('corridor')) {
+    f3Id = r.id + '-3';
+    f3Name = r.name + ' (Fl 3)';
+  } else {
+    f3Id = r.id + '-3';
+  }
+
+  roomsData.push({
+    ...r,
+    id: f3Id,
+    name: f3Name,
+    floor: '3',
+    yLevel: 0.0
+  });
+});
+
+// Floor 4 Rooms (Elevated Stack y = 7.0)
+baseRoomsData.forEach(r => {
+  roomsData.push({
+    ...r,
+    floor: '4',
+    yLevel: 7.0
+  });
+});
+
 // --- 2. GLOBAL STATE ---
 let scene, camera, renderer, controls;
 let roomMeshes = {};
 let roomBeacons = {};
+let roomCircles = {};
 let roomLabels = [];
 let wallHeightScale = 1.0;
 let isWireframe = false;
+let activeFloorFilter = 'all'; // 'all', '3', '4'
 
 let alerts = [];
 let guardsData = [];
 let alertSeq = 1;
 let currentActiveView = '3d';
+let showFullHistory = false;
 
 // 3D Guard markers & connection lines
 let guardMarkers3D = {};
 let guardConnectionLines = [];
+let buildingSlabs = [];
+let cornerPillars = [];
 
 // Sound effect generator for SOS alert
 function playAlertSound() {
@@ -94,12 +135,12 @@ function init3D() {
   // Scene setup
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xEBF3FE);
-  scene.fog = new THREE.FogExp2(0xEBF3FE, 0.012);
+  scene.fog = new THREE.FogExp2(0xEBF3FE, 0.008);
 
   // Camera setup
   const aspect = container.clientWidth / container.clientHeight;
   camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-  camera.position.set(4, 38, 38);
+  camera.position.set(4, 46, 46);
 
   // Renderer setup
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -113,30 +154,30 @@ function init3D() {
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.maxPolarAngle = Math.PI / 2.1; // Don't flip below floor
-  controls.target.set(4, 0, 1);
+  controls.maxPolarAngle = Math.PI / 2.05; // Don't flip below floor
+  controls.target.set(4, 3.5, 1);
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.85);
   scene.add(ambientLight);
 
   const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.7);
-  dirLight.position.set(20, 40, 20);
+  dirLight.position.set(20, 50, 20);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = 2048;
   dirLight.shadow.mapSize.height = 2048;
   scene.add(dirLight);
 
   const fillLight = new THREE.DirectionalLight(0xE0EDFF, 0.3);
-  fillLight.position.set(-20, 20, -20);
+  fillLight.position.set(-20, 30, -20);
   scene.add(fillLight);
 
   // Grid Base Floor (Light Blue Grid)
-  const gridHelper = new THREE.GridHelper(80, 40, 0xC2DCFF, 0xD8E8FF);
+  const gridHelper = new THREE.GridHelper(90, 45, 0xC2DCFF, 0xD8E8FF);
   gridHelper.position.y = -0.05;
   scene.add(gridHelper);
 
-  const floorGeo = new THREE.PlaneGeometry(90, 70);
+  const floorGeo = new THREE.PlaneGeometry(100, 80);
   const floorMat = new THREE.MeshStandardMaterial({ color: 0xF0F6FF, roughness: 0.9 });
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
   floorMesh.rotation.x = -Math.PI / 2;
@@ -154,18 +195,173 @@ function init3D() {
   animate();
 }
 
-// --- 4. BUILD 3D ROOM MESHES ---
+// --- 3b. CORNER DOG-LEG (U-TURN) STAIRCASES ---
+function buildCornerStaircases() {
+  const corners = [
+    { name: 'NW Stairs', x: -21.5, z: -12.5, angle: 0 },
+    { name: 'NE Stairs', x: 21.5,  z: -12.5, angle: Math.PI },
+    { name: 'SW Stairs', x: -21.5, z: 15.0,  angle: 0 },
+    { name: 'SE Stairs', x: 23.5,  z: 15.0,  angle: Math.PI }
+  ];
+
+  const stepsPerFlight = 7;
+  const flightHeight = 3.5;
+  const stepHeight = flightHeight / stepsPerFlight; // 0.5
+  const stepDepth = 0.45;
+  const stepWidth = 1.4;
+
+  const stepMat = new THREE.MeshStandardMaterial({
+    color: 0x334155,
+    roughness: 0.3,
+    metalness: 0.4
+  });
+
+  const landingMat = new THREE.MeshStandardMaterial({
+    color: 0x475569,
+    roughness: 0.4,
+    metalness: 0.3
+  });
+
+  const railMat = new THREE.MeshStandardMaterial({
+    color: 0x64748B,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0x93C5FD,
+    transparent: true,
+    opacity: 0.45,
+    roughness: 0.1
+  });
+
+  corners.forEach(c => {
+    const stairGroup = new THREE.Group();
+    stairGroup.position.set(c.x, 0, c.z);
+    stairGroup.rotation.y = c.angle;
+
+    // --- FLIGHT 1 (Upper: Floor 4 y=7.0 down to Mid-Landing y=3.5, Facing Outward +Z) ---
+    const f1X = -0.8;
+    for (let i = 0; i < stepsPerFlight; i++) {
+      const stepGeo = new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth);
+      const stepMesh = new THREE.Mesh(stepGeo, stepMat);
+      stepMesh.position.set(f1X, 7.0 - (i + 0.5) * stepHeight, i * stepDepth);
+      stepMesh.castShadow = true;
+      stepMesh.receiveShadow = true;
+      stairGroup.add(stepMesh);
+    }
+
+    // --- MID-LANDING PLATFORM (at y = 3.5, connecting Flight 1 to Flight 2) ---
+    const landingLength = 1.6;
+    const landingGeo = new THREE.BoxGeometry(stepWidth * 2 + 0.4, 0.2, landingLength);
+    const landingMesh = new THREE.Mesh(landingGeo, landingMat);
+    const landingZ = (stepsPerFlight - 0.5) * stepDepth + landingLength / 2;
+    landingMesh.position.set(0, 3.4, landingZ);
+    landingMesh.castShadow = true;
+    landingMesh.receiveShadow = true;
+    stairGroup.add(landingMesh);
+
+    // --- FLIGHT 2 (Lower: Mid-Landing y=3.5 down to Floor 3 y=0.0, Facing Inward -Z) ---
+    const f2X = 0.8;
+    for (let i = 0; i < stepsPerFlight; i++) {
+      const stepGeo = new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth);
+      const stepMesh = new THREE.Mesh(stepGeo, stepMat);
+      stepMesh.position.set(f2X, 3.5 - (i + 0.5) * stepHeight, (stepsPerFlight - 1 - i) * stepDepth);
+      stepMesh.castShadow = true;
+      stepMesh.receiveShadow = true;
+      stairGroup.add(stepMesh);
+    }
+
+    // --- GLASS BALUSTRADES & HANDRAILS ---
+    const flightLength = stepsPerFlight * stepDepth;
+    const diagLength = Math.sqrt(Math.pow(flightLength, 2) + Math.pow(flightHeight, 2));
+    const glassThickness = 0.06;
+    const glassHeight = 1.0;
+
+    // Flight 1 Outer Glass (Left)
+    const glassGeo1 = new THREE.BoxGeometry(glassThickness, glassHeight, diagLength);
+    const g1 = new THREE.Mesh(glassGeo1, glassMat);
+    g1.position.set(f1X - stepWidth / 2 - 0.04, 5.25 + 0.4, flightLength / 2 - 0.2);
+    g1.rotation.x = Math.atan2(flightHeight, flightLength);
+    stairGroup.add(g1);
+
+    // Flight 2 Outer Glass (Right)
+    const g2 = new THREE.Mesh(glassGeo1, glassMat);
+    g2.position.set(f2X + stepWidth / 2 + 0.04, 1.75 + 0.4, flightLength / 2 - 0.2);
+    g2.rotation.x = -Math.atan2(flightHeight, flightLength);
+    stairGroup.add(g2);
+
+    // Mid Landing End Glass (Back wall of landing)
+    const endGlassGeo = new THREE.BoxGeometry(stepWidth * 2 + 0.4, glassHeight, glassThickness);
+    const gLanding = new THREE.Mesh(endGlassGeo, glassMat);
+    gLanding.position.set(0, 3.4 + glassHeight / 2 + 0.1, landingZ + landingLength / 2);
+    stairGroup.add(gLanding);
+
+    // Handrail Tubes
+    const railGeo = new THREE.CylinderGeometry(0.04, 0.04, diagLength, 12);
+
+    const r1 = new THREE.Mesh(railGeo, railMat);
+    r1.position.set(f1X - stepWidth / 2 - 0.04, 5.25 + 0.9, flightLength / 2 - 0.2);
+    r1.rotation.x = Math.atan2(flightHeight, flightLength) + Math.PI / 2;
+    stairGroup.add(r1);
+
+    const r2 = new THREE.Mesh(railGeo, railMat);
+    r2.position.set(f2X + stepWidth / 2 + 0.04, 1.75 + 0.9, flightLength / 2 - 0.2);
+    r2.rotation.x = -Math.atan2(flightHeight, flightLength) + Math.PI / 2;
+    stairGroup.add(r2);
+
+    scene.add(stairGroup);
+    buildingSlabs.push(stairGroup);
+  });
+}
+
+// --- 4. BUILD 3D ROOM MESHES & STACKED ARCHITECTURE ---
 function build3DFloorPlan() {
   const wallHeight = 2.5;
 
+  // Inter-Floor Concrete Separator Slab (Ceiling of Floor 3 / Floor of Floor 4)
+  const slabGeo = new THREE.BoxGeometry(60, 0.25, 40);
+  const slabMat = new THREE.MeshStandardMaterial({
+    color: 0xCBD5E1,
+    roughness: 0.5,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0.85
+  });
+  const slabMesh = new THREE.Mesh(slabGeo, slabMat);
+  slabMesh.position.set(2, 6.85, 1);
+  slabMesh.receiveShadow = true;
+  scene.add(slabMesh);
+  buildingSlabs.push(slabMesh);
+
+  // 4 Glass/Steel Structural Support Corner Pillars
+  const pillarCorners = [
+    { x: -22, z: -15 },
+    { x: 26, z: -15 },
+    { x: -22, z: 17 },
+    { x: 26, z: 17 }
+  ];
+  const pillarGeo = new THREE.CylinderGeometry(0.4, 0.4, 7.0, 16);
+  const pillarMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.2 });
+  pillarCorners.forEach(c => {
+    const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+    pillar.position.set(c.x, 3.5, c.z);
+    scene.add(pillar);
+    cornerPillars.push(pillar);
+  });
+
+  // 4 Architectural Corner Staircases connecting Floor 3 to Floor 4
+  buildCornerStaircases();
+
   roomsData.forEach(room => {
     const group = new THREE.Group();
-    group.position.set(room.x, 0, room.z);
+    group.position.set(room.x, room.yLevel || 0, room.z);
+    group.userData = { floor: room.floor, roomId: room.id };
 
     // Room Floor Base (Light Blue Floor Base)
     const floorGeo = new THREE.BoxGeometry(room.w - 0.2, 0.1, room.d - 0.2);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: room.isCourtyard ? 0xE6F0FF : (room.isUtility ? 0xD8E8FF : 0xE0EDFF),
+      color: room.isCourtyard ? 0xE6F0FF : (room.isUtility ? 0xD8E8FF : (room.floor === '3' ? 0xDCEBFF : 0xE0EDFF)),
       roughness: 0.6
     });
     const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -180,7 +376,7 @@ function build3DFloorPlan() {
         roughness: 0.3,
         metalness: 0.1,
         transparent: true,
-        opacity: 0.92,
+        opacity: room.floor === '3' ? 0.95 : 0.90,
         wireframe: isWireframe
       });
 
@@ -194,7 +390,7 @@ function build3DFloorPlan() {
 
       // Top Border Rim
       const edges = new THREE.EdgesGeometry(wallGeo);
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x0F172A, linewidth: 1.5 });
+      const lineMat = new THREE.LineBasicMaterial({ color: room.floor === '3' ? 0x0F172A : 0x1E293B, linewidth: 1.5 });
       const wireframe = new THREE.LineSegments(edges, lineMat);
       wireframe.position.y = wallHeight / 2;
       wireframe.name = 'wireframe';
@@ -206,8 +402,39 @@ function build3DFloorPlan() {
       group.add(beaconLight);
       roomBeacons[room.id] = beaconLight;
 
+      // Circular Radar Glow Disc (Smooth floor circle)
+      const radius = Math.min(room.w, room.d) * 0.45;
+      const circleGeo = new THREE.CircleGeometry(radius, 32);
+      const circleMat = new THREE.MeshBasicMaterial({
+        color: 0xFF3B30,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const discMesh = new THREE.Mesh(circleGeo, circleMat);
+      discMesh.rotation.x = -Math.PI / 2;
+      discMesh.position.y = 0.12;
+      group.add(discMesh);
+
+      // Expanding Circular Radar Wave Ring
+      const ringGeo = new THREE.RingGeometry(radius * 0.7, radius * 0.95, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xFF3B30,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.14;
+      group.add(ringMesh);
+
+      roomCircles[room.id] = { disc: discMesh, ring: ringMesh, baseRadius: radius };
+
       // Click interaction raycasting data
-      wallMesh.userData = { roomId: room.id, name: room.name };
+      wallMesh.userData = { roomId: room.id, name: room.name, floor: room.floor };
     }
 
     // Floating 3D Text Label / Canvas Badge
@@ -307,12 +534,13 @@ function createGuardMarker3D(guard) {
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
   const sprite = new THREE.Sprite(spriteMat);
 
+  const yLevel = room.yLevel || 0;
   sprite.scale.set(3, 3, 1);
-  sprite.position.set(room.x, 5.5, room.z);
+  sprite.position.set(room.x, yLevel + 5.5, room.z);
   sprite.renderOrder = 10;
 
   scene.add(sprite);
-  guardMarkers3D[guard.id] = { sprite, canvas, texture, ctx, guard };
+  guardMarkers3D[guard.id] = { sprite, canvas, texture, ctx, guard, room };
 }
 
 function updateGuardMarkers3D() {
@@ -338,16 +566,22 @@ function updateConnectionLines() {
   alerts.forEach(a => {
     if (a.status !== 'ACTIVE' || !a.nearestGuard) return;
 
-    const alertRoom = roomsData.find(r => r.id === a.roomId);
+    const rawAlertRoom = a.primaryRoomId || (a.predictions && a.predictions.most_probable ? a.predictions.most_probable.room : a.roomId);
+    const alertKey = resolveRoomMeshKey(rawAlertRoom) || a.roomId;
+    const alertRoom = roomsData.find(r => r.id === alertKey || r.id === a.roomId);
+
     const guard = guardsData.find(g => g.id === a.nearestGuard.id);
     if (!alertRoom || !guard) return;
 
     const guardRoom = roomsData.find(r => r.id === guard.assignedRoom);
     if (!guardRoom) return;
 
+    const guardY = (guardRoom.yLevel || 0) + 4.5;
+    const alertY = (alertRoom.yLevel || 0) + 4.5;
+
     const points = [
-      new THREE.Vector3(guardRoom.x, 4.5, guardRoom.z),
-      new THREE.Vector3(alertRoom.x, 4.5, alertRoom.z)
+      new THREE.Vector3(guardRoom.x, guardY, guardRoom.z),
+      new THREE.Vector3(alertRoom.x, alertY, alertRoom.z)
     ];
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -365,75 +599,144 @@ function updateConnectionLines() {
   });
 }
 
+// Helper to resolve room ID variants (e.g. "Room 414b (AB2 Fl 4)" -> "414", "314b" -> "314", "female wasroom" -> "gw") to actual 3D room mesh keys
+function resolveRoomMeshKey(roomIdStr) {
+  if (!roomIdStr) return null;
+  const str = String(roomIdStr).toLowerCase();
+
+  // 1. Direct match in roomMeshes
+  const cleanId = str.replace(/[^a-z0-9]/g, '');
+  if (roomMeshes[cleanId]) return cleanId;
+
+  // 2. Extract 3-digit room numbers like 414, 428, 314, 401, etc.
+  const match3Digit = str.match(/\b([34]\d{2})\b/) || str.match(/([34]\d{2})/);
+  if (match3Digit && roomMeshes[match3Digit[1]]) {
+    return match3Digit[1];
+  }
+
+  // 3. Special aliases
+  if (str.includes('girls') || str.includes('female') || str.includes('gw')) {
+    return str.includes('3') ? 'gw-3' : 'gw';
+  }
+  if (str.includes('mens') || str.includes('men') || str.includes('male') || str.includes('mw')) {
+    return str.includes('3') ? 'mw-3' : 'mw';
+  }
+  if (str.includes('faculty')) {
+    return str.includes('3') ? 'faculty-e-3' : 'faculty-e';
+  }
+  if (str.includes('stair')) {
+    return str.includes('3') ? 'st-w-3' : 'st-w';
+  }
+
+  // 4. Substring / fallback search against all known room keys
+  const keys = Object.keys(roomMeshes);
+  for (const k of keys) {
+    if (str.includes(k) || k.includes(str)) return k;
+  }
+
+  return null;
+}
+
 // --- 6. ANIMATION & RENDER LOOP ---
 function animate() {
   requestAnimationFrame(animate);
 
   controls.update();
 
-  // Pulsing 3-Color Probability Lights for active scan predictions
   const time = Date.now() * 0.005;
+
+  // Reset all circular discs & rings before calculating active alerts
+  Object.values(roomCircles).forEach(c => {
+    if (c.disc) c.disc.material.opacity = 0;
+    if (c.ring) {
+      c.ring.material.opacity = 0;
+      c.ring.scale.set(1, 1, 1);
+    }
+  });
+
+  // Pulsing Circular 3-Color Radar Lights for active scan predictions
   alerts.forEach(a => {
     if (a.status === 'ACTIVE') {
       const preds = a.predictions;
       
-      // Tier 1: Most Probable (RED LIGHT 🔴)
-      const p1Room = a.primaryRoomId || (preds && preds.most_probable ? String(preds.most_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '') : a.roomId);
-      if (p1Room && roomMeshes[p1Room]) {
-        const group = roomMeshes[p1Room];
-        const wallMesh = group.getObjectByName('wallMesh');
-        const beaconLight = roomBeacons[p1Room];
-        const pulse = (Math.sin(time * 4) + 1) / 2;
-        if (wallMesh) {
-          wallMesh.material.color.setHex(0xFF3B30); // RED
-          wallMesh.material.emissive.setHex(0xFF3B30);
-          wallMesh.material.emissiveIntensity = 0.4 + pulse * 0.6;
-          wallMesh.material.opacity = 0.8 + pulse * 0.2;
+      // Tier 1: Most Probable (CIRCULAR RED RADAR 🔴)
+      const rawP1 = a.primaryRoomId || (preds && preds.most_probable ? preds.most_probable.room : a.roomId);
+      const p1Key = resolveRoomMeshKey(rawP1);
+      if (p1Key && roomMeshes[p1Key]) {
+        const cData = roomCircles[p1Key];
+        const beaconLight = roomBeacons[p1Key];
+        const pulse = (Math.sin(time * 5) + 1) / 2;
+        const ringProgress = (time * 1.6) % 1.0;
+        const ringScale = 1.0 + ringProgress * 1.1;
+        const ringFade = Math.max(0, 1.0 - ringProgress);
+
+        if (cData) {
+          // Circular Disc Pulsing Glow
+          cData.disc.material.color.setHex(0xFF3B30); // RED
+          cData.disc.material.opacity = 0.55 + pulse * 0.35;
+
+          // Expanding Circular Radar Wave Ring
+          cData.ring.material.color.setHex(0xFF3B30);
+          cData.ring.scale.set(ringScale, ringScale, 1);
+          cData.ring.material.opacity = ringFade * 0.85;
         }
+
         if (beaconLight) {
           beaconLight.color.setHex(0xFF3B30);
-          beaconLight.intensity = 3 + Math.sin(time * 6) * 2;
+          beaconLight.intensity = 6 + pulse * 4;
         }
       }
 
-      // Tier 2: Medium Probable (ORANGE LIGHT 🟠)
+      // Tier 2: Medium Probable (CIRCULAR ORANGE RADAR 🟠)
       if (preds && preds.medium_probable) {
-        const p2Room = String(preds.medium_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (p2Room && p2Room !== p1Room && roomMeshes[p2Room]) {
-          const group = roomMeshes[p2Room];
-          const wallMesh = group.getObjectByName('wallMesh');
-          const beaconLight = roomBeacons[p2Room];
-          const pulse = (Math.sin(time * 3 + 1) + 1) / 2;
-          if (wallMesh) {
-            wallMesh.material.color.setHex(0xFF9F0A); // ORANGE
-            wallMesh.material.emissive.setHex(0xFF9F0A);
-            wallMesh.material.emissiveIntensity = 0.3 + pulse * 0.4;
-            wallMesh.material.opacity = 0.7 + pulse * 0.2;
+        const p2Key = resolveRoomMeshKey(preds.medium_probable.room);
+        if (p2Key && p2Key !== p1Key && roomMeshes[p2Key]) {
+          const cData = roomCircles[p2Key];
+          const beaconLight = roomBeacons[p2Key];
+          const pulse = (Math.sin(time * 3.5 + 1) + 1) / 2;
+          const ringProgress = (time * 1.3 + 0.3) % 1.0;
+          const ringScale = 1.0 + ringProgress * 1.0;
+          const ringFade = Math.max(0, 1.0 - ringProgress);
+
+          if (cData) {
+            cData.disc.material.color.setHex(0xFF9F0A); // ORANGE
+            cData.disc.material.opacity = 0.45 + pulse * 0.3;
+
+            cData.ring.material.color.setHex(0xFF9F0A);
+            cData.ring.scale.set(ringScale, ringScale, 1);
+            cData.ring.material.opacity = ringFade * 0.75;
           }
+
           if (beaconLight) {
             beaconLight.color.setHex(0xFF9F0A);
-            beaconLight.intensity = 2 + Math.sin(time * 4) * 1;
+            beaconLight.intensity = 4 + pulse * 2.5;
           }
         }
       }
 
-      // Tier 3: Less Probable (YELLOW LIGHT 🟡)
+      // Tier 3: Less Probable (CIRCULAR YELLOW RADAR 🟡)
       if (preds && preds.less_probable) {
-        const p3Room = String(preds.less_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (p3Room && roomMeshes[p3Room]) {
-          const group = roomMeshes[p3Room];
-          const wallMesh = group.getObjectByName('wallMesh');
-          const beaconLight = roomBeacons[p3Room];
+        const p3Key = resolveRoomMeshKey(preds.less_probable.room);
+        if (p3Key && p3Key !== p1Key && roomMeshes[p3Key]) {
+          const cData = roomCircles[p3Key];
+          const beaconLight = roomBeacons[p3Key];
           const pulse = (Math.sin(time * 2.5 + 2) + 1) / 2;
-          if (wallMesh) {
-            wallMesh.material.color.setHex(0xFFCC00); // YELLOW
-            wallMesh.material.emissive.setHex(0xFFCC00);
-            wallMesh.material.emissiveIntensity = 0.2 + pulse * 0.3;
-            wallMesh.material.opacity = 0.6 + pulse * 0.2;
+          const ringProgress = (time * 1.0 + 0.6) % 1.0;
+          const ringScale = 1.0 + ringProgress * 0.9;
+          const ringFade = Math.max(0, 1.0 - ringProgress);
+
+          if (cData) {
+            cData.disc.material.color.setHex(0xFFCC00); // YELLOW
+            cData.disc.material.opacity = 0.35 + pulse * 0.25;
+
+            cData.ring.material.color.setHex(0xFFCC00);
+            cData.ring.scale.set(ringScale, ringScale, 1);
+            cData.ring.material.opacity = ringFade * 0.65;
           }
+
           if (beaconLight) {
             beaconLight.color.setHex(0xFFCC00);
-            beaconLight.intensity = 1.5 + Math.sin(time * 3) * 0.8;
+            beaconLight.intensity = 2.5 + pulse * 1.5;
           }
         }
       }
@@ -443,7 +746,8 @@ function animate() {
   // Floating animation for guard markers
   Object.values(guardMarkers3D).forEach(m => {
     if (m.guard.status === 'responding') {
-      m.sprite.position.y = 5.5 + Math.sin(time * 2) * 0.5;
+      const baseY = (m.room ? (m.room.yLevel || 0) : 0) + 5.5;
+      m.sprite.position.y = baseY + Math.sin(time * 2) * 0.5;
     }
   });
 
@@ -462,8 +766,41 @@ function onWindowResize() {
 // --- 7. 3D CONTROLS & CAMERA HELPERS ---
 function reset3DCamera() {
   if (!controls) return;
-  controls.target.set(4, 0, 1);
-  camera.position.set(4, 38, 38);
+  controls.target.set(4, 3.5, 1);
+  camera.position.set(4, 46, 46);
+}
+
+function filterFloor(floorStr) {
+  activeFloorFilter = floorStr;
+  const btnAll = document.getElementById('btn-fl-all');
+  const btn4 = document.getElementById('btn-fl-4');
+  const btn3 = document.getElementById('btn-fl-3');
+
+  if (btnAll) btnAll.classList.toggle('active', floorStr === 'all');
+  if (btn4) btn4.classList.toggle('active', floorStr === '4');
+  if (btn3) btn3.classList.toggle('active', floorStr === '3');
+
+  roomsData.forEach(r => {
+    if (roomMeshes[r.id]) {
+      const show = (floorStr === 'all') || (r.floor === 'ground') || (r.floor === floorStr);
+      roomMeshes[r.id].visible = show;
+    }
+  });
+
+  buildingSlabs.forEach(s => {
+    s.visible = (floorStr === 'all' || floorStr === '4');
+  });
+
+  if (floorStr === '3') {
+    controls.target.set(4, 1.5, 1);
+    camera.position.set(4, 32, 36);
+  } else if (floorStr === '4') {
+    controls.target.set(4, 8.5, 1);
+    camera.position.set(4, 40, 40);
+  } else {
+    controls.target.set(4, 3.5, 1);
+    camera.position.set(4, 46, 46);
+  }
 }
 
 function toggleWallHeight() {
@@ -495,13 +832,17 @@ function toggleWireframe() {
 
 function focusActiveAlert() {
   const activeAlert = alerts.find(a => a.status === 'ACTIVE');
-  if (activeAlert && roomMeshes[activeAlert.roomId]) {
-    const targetGroup = roomMeshes[activeAlert.roomId];
-    const pos = targetGroup.position;
+  if (activeAlert) {
+    const rawKey = activeAlert.primaryRoomId || (activeAlert.predictions && activeAlert.predictions.most_probable ? activeAlert.predictions.most_probable.room : activeAlert.roomId);
+    const key = resolveRoomMeshKey(rawKey) || activeAlert.roomId;
+    if (roomMeshes[key]) {
+      const targetGroup = roomMeshes[key];
+      const pos = targetGroup.position;
 
-    // Smoothly focus camera
-    controls.target.set(pos.x, 0, pos.z);
-    camera.position.set(pos.x, 18, pos.z + 18);
+      // Smoothly focus camera
+      controls.target.set(pos.x, pos.y + 1.5, pos.z);
+      camera.position.set(pos.x, pos.y + 18, pos.z + 18);
+    }
   }
 }
 
@@ -618,7 +959,8 @@ function renderMap3DAnd2D() {
   alerts.forEach(a => {
     if (a.status === 'ACTIVE') {
       // 2D Grid Highlight
-      const el = document.querySelector(`.room[data-room-id="${a.roomId}"]`);
+      const rKey = resolveRoomMeshKey(a.primaryRoomId || (a.predictions && a.predictions.most_probable ? a.predictions.most_probable.room : a.roomId)) || a.roomId;
+      const el = document.querySelector(`.room[data-room-id="${rKey}"]`);
       if (el) {
         el.classList.add('flagged');
         if (!el.querySelector('.pulse-dot')) {
@@ -647,17 +989,40 @@ function renderMap3DAnd2D() {
   updateConnectionLines();
 }
 
+function toggleAlertHistoryMode(showAll) {
+  showFullHistory = showAll;
+  const recentBtn = document.getElementById('alert-tab-recent');
+  const historyBtn = document.getElementById('alert-tab-history');
+
+  if (recentBtn && historyBtn) {
+    if (showAll) {
+      recentBtn.classList.remove('active');
+      historyBtn.classList.add('active');
+    } else {
+      recentBtn.classList.add('active');
+      historyBtn.classList.remove('active');
+    }
+  }
+  renderAlertFeed();
+}
+
 function renderAlertFeed() {
   const el = document.getElementById('alert-feed');
   const activeCount = alerts.filter(a => a.status === 'ACTIVE').length;
   document.getElementById('active-count').textContent = `${activeCount} active`;
+
+  const totalEl = document.getElementById('history-total-count');
+  if (totalEl) totalEl.textContent = alerts.length;
 
   if (alerts.length === 0) {
     el.innerHTML = `<div class="empty-state">No active alerts. Click "Simulate SOS" to test.</div>`;
     return;
   }
 
-  el.innerHTML = alerts.map(a => {
+  // Limit feed to last 5 entries by default unless Full History is enabled
+  const displayedAlerts = showFullHistory ? alerts : alerts.slice(0, 5);
+
+  let html = displayedAlerts.map(a => {
     const isResolved = a.status === 'RESOLVED';
     const guardInfo = a.nearestGuard
       ? `<div class="alert-guard-info">
@@ -689,6 +1054,34 @@ function renderAlertFeed() {
       </div>
     `;
   }).join('');
+
+  // Append "View Full History" button if there are more than 5 items and history is collapsed
+  if (!showFullHistory && alerts.length > 5) {
+    html += `
+      <div style="text-align: center; padding: 12px 0 4px 0;">
+        <button class="tool-btn" onclick="toggleAlertHistoryMode(true)" style="background: #F0F6FF; border: 1px solid #C2DCFF; color: #007AFF; font-weight: 500;">
+          📜 View All ${alerts.length} Historical Alerts (${alerts.length - 5} hidden)
+        </button>
+      </div>
+    `;
+  }
+
+  el.innerHTML = html;
+}
+
+// Resolve alert (UI + Backend PATCH call)
+async function resolve(id) {
+  try {
+    const alert = alerts.find(a => a.id === id);
+    if (alert) {
+      alert.status = 'RESOLVED';
+      alert.resolvedAt = Date.now();
+      renderAll();
+    }
+    await fetch(`/api/alerts/${id}/resolve`, { method: 'PATCH' });
+  } catch (err) {
+    console.error('Error resolving alert:', err);
+  }
 }
 
 function renderGuardsPanel() {
@@ -745,34 +1138,28 @@ function renderAll() {
   renderGuardsPanel();
 }
 
-let isPollingActive = false;
-
-function startPollingFallback() {
-  if (isPollingActive) return;
-  isPollingActive = true;
-  console.log('🔄 WebSockets unavailable (Serverless/Vercel mode). Active HTTP polling (2s)...');
-  
-  setInterval(async () => {
-    try {
-      const res = await fetch('/api/alerts');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.alerts && JSON.stringify(data.alerts) !== JSON.stringify(alerts)) {
-          const oldLen = alerts.length;
-          alerts = data.alerts;
-          if (alerts.length > oldLen) {
-            playAlertSound();
-          }
-          renderAll();
+// HTTP Polling fallback for Vercel Serverless persistence
+let lastAlertCount = 0;
+async function fetchAlertsFromApi() {
+  try {
+    const res = await fetch('/api/alerts');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.alerts)) {
+        const prevLength = alerts.length;
+        alerts = data.alerts;
+        if (alerts.length > prevLength && prevLength > 0) {
+          playAlertSound();
         }
+        renderAll();
       }
-    } catch (e) {
-      console.warn('Polling fallback warning:', e.message);
     }
-  }, 2000);
+  } catch (err) {
+    console.warn('Alert polling warning:', err.message);
+  }
 }
 
-// Connect to WebSockets for live ESP32 updates (with Vercel serverless polling fallback)
+// Connect to WebSockets for live ESP32 updates (local Node server)
 function initWebSocket() {
   try {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -799,16 +1186,11 @@ function initWebSocket() {
         renderAll();
       }
     };
-
     ws.onerror = () => {
-      startPollingFallback();
-    };
-
-    ws.onclose = () => {
-      startPollingFallback();
+      // Graceful fallback to HTTP Polling on Vercel
     };
   } catch (e) {
-    startPollingFallback();
+    // WebSockets disabled in Serverless environment
   }
 }
 
@@ -816,5 +1198,7 @@ function initWebSocket() {
 window.addEventListener('DOMContentLoaded', () => {
   init3D();
   initWebSocket();
+  fetchAlertsFromApi();
+  setInterval(fetchAlertsFromApi, 2000); // Poll every 2 seconds for live Vercel updates
   renderAll();
 });

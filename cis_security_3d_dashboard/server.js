@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
-const MAPPINGS_FILE = path.join(__dirname, '../mapper/mappings.json');
+const MAPPINGS_FILE = path.join(__dirname, 'data/mappings.json');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -138,7 +138,7 @@ function getAllRoomFingerprints() {
   const fingerprints = [];
 
   // 1. Load from CSV if present
-  const csvPath = path.join(__dirname, '../wifi-mappings(8).csv');
+  const csvPath = path.join(__dirname, 'data/wifi-mappings(8).csv');
   if (fs.existsSync(csvPath)) {
     try {
       const content = fs.readFileSync(csvPath, 'utf-8');

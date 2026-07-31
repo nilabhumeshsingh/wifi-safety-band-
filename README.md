@@ -30,9 +30,8 @@ The device is built around **Wi-Fi positioning (Wi-Fi BSSID scanning)** rather t
 |---|---|
 | **Microcontroller** | ESP Wi-Fi Module *(model: ESP32)* |
 | **Input Trigger** | Tactile push button, configured for **long-press SOS activation** (prevents accidental triggers from a brief bump) |
-| **Power Source** | Rechargeable LiPo battery, 5–7W capacity |
-| **Charging** | USB-C / TP4056 charge controller *(confirm if used)* |
-| **Enclosure** | Pocket-clip form factor |
+| **Power Source** | Rechargeable LiPo battery, 5–7W capacity ,Power Bank |
+| **Charging** | USB-C / TP4056 charge controller |
 
 
 ### Software & Cloud Infrastructure

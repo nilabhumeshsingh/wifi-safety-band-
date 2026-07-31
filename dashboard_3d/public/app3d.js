@@ -2,53 +2,53 @@
 // NIGHTGUARD 3D VECTOR FLOOR PLAN ENGINE (Three.js)
 // =========================================================================
 
-// --- 1. ROOM LAYOUT DATASET (Exact Match with Floor Plan Blueprint Diagram) ---
+// --- 1. ROOM LAYOUT DATASET (Light Blue Theme Aesthetic) ---
 const roomsData = [
   // Outer Main Corridors (Building Frame)
-  { id: 'corridor-top',    name: 'MAIN CORRIDOR', x: 0,    z: -8.5, w: 32,   d: 2.5, color: 0x222634, isCorridor: true },
-  { id: 'corridor-left',   name: 'MAIN CORRIDOR', x: -12.5, z: 0,    w: 2.5,  d: 19.5, color: 0x222634, isCorridor: true },
-  { id: 'corridor-right',  name: 'MAIN CORRIDOR', x: 12.5,  z: 0,    w: 2.5,  d: 19.5, color: 0x222634, isCorridor: true },
-  { id: 'corridor-bottom', name: 'MAIN CORRIDOR', x: 0,    z: 8.5,  w: 32,   d: 2.5, color: 0x222634, isCorridor: true },
+  { id: 'corridor-top',    name: 'MAIN CORRIDOR', x: 0,    z: -8.5, w: 32,   d: 2.5, color: 0x1E293B, isCorridor: true },
+  { id: 'corridor-left',   name: 'MAIN CORRIDOR', x: -12.5, z: 0,    w: 2.5,  d: 19.5, color: 0x1E293B, isCorridor: true },
+  { id: 'corridor-right',  name: 'MAIN CORRIDOR', x: 12.5,  z: 0,    w: 2.5,  d: 19.5, color: 0x1E293B, isCorridor: true },
+  { id: 'corridor-bottom', name: 'MAIN CORRIDOR', x: 0,    z: 8.5,  w: 32,   d: 2.5, color: 0x1E293B, isCorridor: true },
 
   // Central Open Courtyard
-  { id: 'courtyard', name: 'CENTRAL OPEN COURTYARD', x: 0, z: 0, w: 22.5, d: 14.5, color: 0x141722, isCourtyard: true },
+  { id: 'courtyard', name: 'CENTRAL OPEN COURTYARD', x: 0, z: 0, w: 22.5, d: 14.5, color: 0xE6F0FF, isCourtyard: true },
 
   // Top Section
-  { id: '401', name: '401\nStairs', x: -20,   z: -12.5, w: 6.5, d: 6.5, color: 0x2C303E, isUtility: true },
-  { id: '402', name: '402',        x: -11,   z: -12.5, w: 8,   d: 4.5, color: 0x3A3F53 },
-  { id: '403', name: '403',        x: 11,    z: -12.5, w: 8,   d: 4.5, color: 0x3A3F53 },
-  { id: '404', name: '404',        x: 19.5,  z: -12.5, w: 6.5, d: 6.5, color: 0x3A3F53 },
+  { id: '401', name: '401\nStairs', x: -20,   z: -12.5, w: 6.5, d: 6.5, color: 0x334155, isUtility: true },
+  { id: '402', name: '402',        x: -11,   z: -12.5, w: 8,   d: 4.5, color: 0x0F172A },
+  { id: '403', name: '403',        x: 11,    z: -12.5, w: 8,   d: 4.5, color: 0x0F172A },
+  { id: '404', name: '404',        x: 19.5,  z: -12.5, w: 6.5, d: 6.5, color: 0x0F172A },
 
   // West Wing (Left Vertical Column)
-  { id: '430', name: '430',            x: -17.5, z: -6.5, w: 6.5, d: 3.2, color: 0x3A3F53 },
-  { id: '429', name: '429',            x: -17.5, z: -3.0, w: 6.5, d: 3.2, color: 0x3A3F53 },
-  { id: '428', name: '428',            x: -17.5, z: 0.5,  w: 6.5, d: 3.2, color: 0x3A3F53 },
-  { id: '427', name: '427',            x: -17.5, z: 4.5,  w: 6.5, d: 4.2, color: 0x3A3F53 },
-  { id: 'gw',  name: 'Girls Washroom', x: -17.5, z: 9.2,  w: 6.5, d: 4.2, color: 0x2C303E, isUtility: true },
+  { id: '430', name: '430',            x: -17.5, z: -6.5, w: 6.5, d: 3.2, color: 0x0F172A },
+  { id: '429', name: '429',            x: -17.5, z: -3.0, w: 6.5, d: 3.2, color: 0x0F172A },
+  { id: '428', name: '428',            x: -17.5, z: 0.5,  w: 6.5, d: 3.2, color: 0x0F172A },
+  { id: '427', name: '427',            x: -17.5, z: 4.5,  w: 6.5, d: 4.2, color: 0x0F172A },
+  { id: 'gw',  name: 'Girls Washroom', x: -17.5, z: 9.2,  w: 6.5, d: 4.2, color: 0x334155, isUtility: true },
 
   // East Wing (Right Vertical Column)
-  { id: 'faculty-e', name: 'Faculty',     x: 17.5, z: -6.5, w: 6.5, d: 3.2, color: 0x2C303E, isUtility: true },
-  { id: '408',       name: '408',         x: 17.5, z: -3.0, w: 6.5, d: 3.2, color: 0x3A3F53 },
-  { id: '409',       name: '409',         x: 17.5, z: 0.5,  w: 6.5, d: 3.2, color: 0x3A3F53 },
-  { id: '410',       name: '410\nFaculty', x: 17.5, z: 4.5,  w: 6.5, d: 4.2, color: 0x2C303E, isUtility: true },
-  { id: 'mw',        name: "Men's Washroom", x: 24.5, z: 4.5, w: 6.5, d: 4.2, color: 0x2C303E, isUtility: true },
+  { id: 'faculty-e', name: 'Faculty',     x: 17.5, z: -6.5, w: 6.5, d: 3.2, color: 0x334155, isUtility: true },
+  { id: '408',       name: '408',         x: 17.5, z: -3.0, w: 6.5, d: 3.2, color: 0x0F172A },
+  { id: '409',       name: '409',         x: 17.5, z: 0.5,  w: 6.5, d: 3.2, color: 0x0F172A },
+  { id: '410',       name: '410\nFaculty', x: 17.5, z: 4.5,  w: 6.5, d: 4.2, color: 0x334155, isUtility: true },
+  { id: 'mw',        name: "Men's Washroom", x: 24.5, z: 4.5, w: 6.5, d: 4.2, color: 0x334155, isUtility: true },
 
   // South Row (Above Bottom Corridor, Facing Courtyard)
-  { id: '420', name: '420', x: -8.5, z: 4.5, w: 5.2, d: 4.2, color: 0x3A3F53 },
-  { id: '419', name: '419', x: -2.8, z: 4.5, w: 5.2, d: 4.2, color: 0x3A3F53 },
-  { id: '418', name: '418', x: 2.8,  z: 4.5, w: 5.2, d: 4.2, color: 0x3A3F53 },
-  { id: '417', name: '417', x: 8.5,  z: 4.5, w: 5.2, d: 4.2, color: 0x3A3F53 },
+  { id: '420', name: '420', x: -8.5, z: 4.5, w: 5.2, d: 4.2, color: 0x0F172A },
+  { id: '419', name: '419', x: -2.8, z: 4.5, w: 5.2, d: 4.2, color: 0x0F172A },
+  { id: '418', name: '418', x: 2.8,  z: 4.5, w: 5.2, d: 4.2, color: 0x0F172A },
+  { id: '417', name: '417', x: 8.5,  z: 4.5, w: 5.2, d: 4.2, color: 0x0F172A },
 
   // Bottom-Left Wing (SW)
-  { id: 'st-w', name: 'Stairs', x: -20.5, z: 15, w: 4.5, d: 4.2, color: 0x2C303E, isUtility: true },
-  { id: '423',  name: '423',    x: -15.5, z: 15, w: 4.8, d: 4.2, color: 0x3A3F53 },
-  { id: '422',  name: '422',    x: -10.2, z: 15, w: 4.8, d: 4.2, color: 0x3A3F53 },
-  { id: '421',  name: '421',    x: -5.0,  z: 15, w: 4.8, d: 4.2, color: 0x3A3F53 },
+  { id: 'st-w', name: 'Stairs', x: -20.5, z: 15, w: 4.5, d: 4.2, color: 0x334155, isUtility: true },
+  { id: '423',  name: '423',    x: -15.5, z: 15, w: 4.8, d: 4.2, color: 0x0F172A },
+  { id: '422',  name: '422',    x: -10.2, z: 15, w: 4.8, d: 4.2, color: 0x0F172A },
+  { id: '421',  name: '421',    x: -5.0,  z: 15, w: 4.8, d: 4.2, color: 0x0F172A },
 
   // Bottom-Right Wing (SE)
-  { id: '416', name: '416', x: 11.5, z: 15.0, w: 6.2, d: 4.2, color: 0x3A3F53 },
-  { id: '415', name: '415', x: 18.2, z: 15.0, w: 6.2, d: 4.2, color: 0x3A3F53 },
-  { id: '414', name: '414', x: 24.9, z: 15.0, w: 6.2, d: 4.2, color: 0x3A3F53 }
+  { id: '416', name: '416', x: 11.5, z: 15.0, w: 6.2, d: 4.2, color: 0x0F172A },
+  { id: '415', name: '415', x: 18.2, z: 15.0, w: 6.2, d: 4.2, color: 0x0F172A },
+  { id: '414', name: '414', x: 24.9, z: 15.0, w: 6.2, d: 4.2, color: 0x0F172A }
 ];
 
 // --- 2. GLOBAL STATE ---
@@ -60,8 +60,13 @@ let wallHeightScale = 1.0;
 let isWireframe = false;
 
 let alerts = [];
+let guardsData = [];
 let alertSeq = 1;
 let currentActiveView = '3d';
+
+// 3D Guard markers & connection lines
+let guardMarkers3D = {};
+let guardConnectionLines = [];
 
 // Sound effect generator for SOS alert
 function playAlertSound() {
@@ -88,8 +93,8 @@ function init3D() {
 
   // Scene setup
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x11151F);
-  scene.fog = new THREE.FogExp2(0x11151F, 0.015);
+  scene.background = new THREE.Color(0xEBF3FE);
+  scene.fog = new THREE.FogExp2(0xEBF3FE, 0.012);
 
   // Camera setup
   const aspect = container.clientWidth / container.clientHeight;
@@ -112,27 +117,27 @@ function init3D() {
   controls.target.set(4, 0, 1);
 
   // Lighting
-  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.6);
+  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.85);
   scene.add(ambientLight);
 
-  const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+  const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.7);
   dirLight.position.set(20, 40, 20);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = 2048;
   dirLight.shadow.mapSize.height = 2048;
   scene.add(dirLight);
 
-  const fillLight = new THREE.DirectionalLight(0x0071E3, 0.3);
+  const fillLight = new THREE.DirectionalLight(0xE0EDFF, 0.3);
   fillLight.position.set(-20, 20, -20);
   scene.add(fillLight);
 
-  // Grid Base Floor
-  const gridHelper = new THREE.GridHelper(80, 40, 0x0071E3, 0x222938);
+  // Grid Base Floor (Light Blue Grid)
+  const gridHelper = new THREE.GridHelper(80, 40, 0xC2DCFF, 0xD8E8FF);
   gridHelper.position.y = -0.05;
   scene.add(gridHelper);
 
   const floorGeo = new THREE.PlaneGeometry(90, 70);
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x0C0F17, roughness: 0.8 });
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0xF0F6FF, roughness: 0.9 });
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
   floorMesh.rotation.x = -Math.PI / 2;
   floorMesh.position.y = -0.1;
@@ -157,10 +162,10 @@ function build3DFloorPlan() {
     const group = new THREE.Group();
     group.position.set(room.x, 0, room.z);
 
-    // Room Floor Base
+    // Room Floor Base (Light Blue Floor Base)
     const floorGeo = new THREE.BoxGeometry(room.w - 0.2, 0.1, room.d - 0.2);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: room.isCourtyard ? 0x141722 : (room.isUtility ? 0x222634 : 0x2A3042),
+      color: room.isCourtyard ? 0xE6F0FF : (room.isUtility ? 0xD8E8FF : 0xE0EDFF),
       roughness: 0.6
     });
     const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -175,7 +180,7 @@ function build3DFloorPlan() {
         roughness: 0.3,
         metalness: 0.1,
         transparent: true,
-        opacity: 0.88,
+        opacity: 0.92,
         wireframe: isWireframe
       });
 
@@ -189,7 +194,7 @@ function build3DFloorPlan() {
 
       // Top Border Rim
       const edges = new THREE.EdgesGeometry(wallGeo);
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x4A536B, linewidth: 1.5 });
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x0F172A, linewidth: 1.5 });
       const wireframe = new THREE.LineSegments(edges, lineMat);
       wireframe.position.y = wallHeight / 2;
       wireframe.name = 'wireframe';
@@ -216,24 +221,29 @@ function build3DFloorPlan() {
 // --- 5. FLOATING ROOM LABELS ---
 function create3DRoomLabel(room, parentGroup) {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
+  canvas.width = 320;
+  canvas.height = 160;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = room.isCourtyard ? 'rgba(0,0,0,0)' : 'rgba(29,29,31,0.85)';
+  ctx.fillStyle = room.isCourtyard ? 'rgba(0,0,0,0)' : 'rgba(240, 246, 255, 0.95)';
   if (!room.isCourtyard) {
-    ctx.roundRect(10, 20, 236, 88, 16);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 4;
-    ctx.stroke();
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(12, 24, 296, 112, 20);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(194, 220, 255, 0.8)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    } else {
+      ctx.fillRect(12, 24, 296, 112);
+    }
   }
 
-  ctx.font = 'bold 36px -apple-system, sans-serif';
-  ctx.fillStyle = room.isCourtyard ? '#6E6E73' : '#FFFFFF';
+  ctx.font = '700 48px "SF Pro Display", "Inter", -apple-system, sans-serif';
+  ctx.fillStyle = room.isCourtyard ? '#475569' : '#0F172A';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(room.id.toUpperCase(), 128, 64);
+  ctx.fillText(room.id.toUpperCase(), 160, 80);
 
   const texture = new THREE.CanvasTexture(canvas);
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
@@ -246,31 +256,194 @@ function create3DRoomLabel(room, parentGroup) {
   roomLabels.push({ sprite, canvas, texture, ctx, room });
 }
 
+// --- 5b. 3D GUARD MARKERS ---
+function createGuardMarker3D(guard) {
+  const room = roomsData.find(r => r.id === guard.assignedRoom);
+  if (!room) return;
+
+  // Create shield-shaped canvas sprite
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  // Draw shield icon
+  const colors = {
+    available: { bg: '#34C759', border: '#1F9C46', glow: 'rgba(52, 199, 89, 0.4)' },
+    responding: { bg: '#FF9F0A', border: '#CC7F08', glow: 'rgba(255, 159, 10, 0.4)' },
+    'off-duty': { bg: '#8E8E93', border: '#636366', glow: 'rgba(142, 142, 147, 0.2)' }
+  };
+
+  const c = colors[guard.status] || colors.available;
+
+  // Glow circle
+  ctx.beginPath();
+  ctx.arc(64, 64, 52, 0, Math.PI * 2);
+  ctx.fillStyle = c.glow;
+  ctx.fill();
+
+  // Main circle
+  ctx.beginPath();
+  ctx.arc(64, 64, 36, 0, Math.PI * 2);
+  ctx.fillStyle = c.bg;
+  ctx.fill();
+  ctx.strokeStyle = c.border;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Shield icon (🛡)
+  ctx.font = '700 28px "SF Pro Display", "Inter", sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🛡', 64, 60);
+
+  // Guard ID label
+  ctx.font = '700 18px "SF Pro Display", "Inter", sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(guard.id, 64, 90);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(spriteMat);
+
+  sprite.scale.set(3, 3, 1);
+  sprite.position.set(room.x, 5.5, room.z);
+  sprite.renderOrder = 10;
+
+  scene.add(sprite);
+  guardMarkers3D[guard.id] = { sprite, canvas, texture, ctx, guard };
+}
+
+function updateGuardMarkers3D() {
+  // Remove old markers
+  Object.values(guardMarkers3D).forEach(m => {
+    scene.remove(m.sprite);
+    m.texture.dispose();
+    m.sprite.material.dispose();
+  });
+  guardMarkers3D = {};
+
+  // Create new markers
+  guardsData.forEach(g => createGuardMarker3D(g));
+}
+
+// --- 5c. GUARD-TO-ALERT CONNECTION LINES ---
+function updateConnectionLines() {
+  // Remove old lines
+  guardConnectionLines.forEach(line => scene.remove(line));
+  guardConnectionLines = [];
+
+  // Draw dashed line from nearest guard to each active alert
+  alerts.forEach(a => {
+    if (a.status !== 'ACTIVE' || !a.nearestGuard) return;
+
+    const alertRoom = roomsData.find(r => r.id === a.roomId);
+    const guard = guardsData.find(g => g.id === a.nearestGuard.id);
+    if (!alertRoom || !guard) return;
+
+    const guardRoom = roomsData.find(r => r.id === guard.assignedRoom);
+    if (!guardRoom) return;
+
+    const points = [
+      new THREE.Vector3(guardRoom.x, 4.5, guardRoom.z),
+      new THREE.Vector3(alertRoom.x, 4.5, alertRoom.z)
+    ];
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineDashedMaterial({
+      color: 0xFF9F0A,
+      dashSize: 1.2,
+      gapSize: 0.6,
+      linewidth: 2
+    });
+
+    const line = new THREE.Line(geometry, material);
+    line.computeLineDistances();
+    scene.add(line);
+    guardConnectionLines.push(line);
+  });
+}
+
 // --- 6. ANIMATION & RENDER LOOP ---
 function animate() {
   requestAnimationFrame(animate);
 
   controls.update();
 
-  // Pulsing animation for active SOS rooms
+  // Pulsing 3-Color Probability Lights for active scan predictions
   const time = Date.now() * 0.005;
   alerts.forEach(a => {
-    if (a.status === 'ACTIVE' && roomMeshes[a.roomId]) {
-      const group = roomMeshes[a.roomId];
-      const wallMesh = group.getObjectByName('wallMesh');
-      const beaconLight = roomBeacons[a.roomId];
-
-      if (wallMesh) {
-        const pulse = (Math.sin(time * 3) + 1) / 2; // 0 to 1
-        wallMesh.material.color.setHex(0xFF3B30);
-        wallMesh.material.emissive.setHex(0xFF3B30);
-        wallMesh.material.emissiveIntensity = 0.3 + pulse * 0.5;
-        wallMesh.material.opacity = 0.7 + pulse * 0.3;
+    if (a.status === 'ACTIVE') {
+      const preds = a.predictions;
+      
+      // Tier 1: Most Probable (RED LIGHT 🔴)
+      const p1Room = a.primaryRoomId || (preds && preds.most_probable ? String(preds.most_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '') : a.roomId);
+      if (p1Room && roomMeshes[p1Room]) {
+        const group = roomMeshes[p1Room];
+        const wallMesh = group.getObjectByName('wallMesh');
+        const beaconLight = roomBeacons[p1Room];
+        const pulse = (Math.sin(time * 4) + 1) / 2;
+        if (wallMesh) {
+          wallMesh.material.color.setHex(0xFF3B30); // RED
+          wallMesh.material.emissive.setHex(0xFF3B30);
+          wallMesh.material.emissiveIntensity = 0.4 + pulse * 0.6;
+          wallMesh.material.opacity = 0.8 + pulse * 0.2;
+        }
+        if (beaconLight) {
+          beaconLight.color.setHex(0xFF3B30);
+          beaconLight.intensity = 3 + Math.sin(time * 6) * 2;
+        }
       }
 
-      if (beaconLight) {
-        beaconLight.intensity = 2 + Math.sin(time * 6) * 1.5;
+      // Tier 2: Medium Probable (ORANGE LIGHT 🟠)
+      if (preds && preds.medium_probable) {
+        const p2Room = String(preds.medium_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (p2Room && p2Room !== p1Room && roomMeshes[p2Room]) {
+          const group = roomMeshes[p2Room];
+          const wallMesh = group.getObjectByName('wallMesh');
+          const beaconLight = roomBeacons[p2Room];
+          const pulse = (Math.sin(time * 3 + 1) + 1) / 2;
+          if (wallMesh) {
+            wallMesh.material.color.setHex(0xFF9F0A); // ORANGE
+            wallMesh.material.emissive.setHex(0xFF9F0A);
+            wallMesh.material.emissiveIntensity = 0.3 + pulse * 0.4;
+            wallMesh.material.opacity = 0.7 + pulse * 0.2;
+          }
+          if (beaconLight) {
+            beaconLight.color.setHex(0xFF9F0A);
+            beaconLight.intensity = 2 + Math.sin(time * 4) * 1;
+          }
+        }
       }
+
+      // Tier 3: Less Probable (YELLOW LIGHT 🟡)
+      if (preds && preds.less_probable) {
+        const p3Room = String(preds.less_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (p3Room && roomMeshes[p3Room]) {
+          const group = roomMeshes[p3Room];
+          const wallMesh = group.getObjectByName('wallMesh');
+          const beaconLight = roomBeacons[p3Room];
+          const pulse = (Math.sin(time * 2.5 + 2) + 1) / 2;
+          if (wallMesh) {
+            wallMesh.material.color.setHex(0xFFCC00); // YELLOW
+            wallMesh.material.emissive.setHex(0xFFCC00);
+            wallMesh.material.emissiveIntensity = 0.2 + pulse * 0.3;
+            wallMesh.material.opacity = 0.6 + pulse * 0.2;
+          }
+          if (beaconLight) {
+            beaconLight.color.setHex(0xFFCC00);
+            beaconLight.intensity = 1.5 + Math.sin(time * 3) * 0.8;
+          }
+        }
+      }
+    }
+  });
+
+  // Floating animation for guard markers
+  Object.values(guardMarkers3D).forEach(m => {
+    if (m.guard.status === 'responding') {
+      m.sprite.position.y = 5.5 + Math.sin(time * 2) * 0.5;
     }
   });
 
@@ -372,6 +545,7 @@ function simulateSOS() {
       roomId: targetRoom.id,
       roomName: `Room ${targetRoom.id}`,
       studentName: 'Student in Distress',
+      nearestGuard: null,
       status: 'ACTIVE',
       createdAt: Date.now()
     });
@@ -389,6 +563,24 @@ function resolve(alertId) {
   });
 }
 
+function toggleGuardStatus(guardId) {
+  const guard = guardsData.find(g => g.id === guardId);
+  if (!guard) return;
+
+  // Cycle: available -> off-duty -> available
+  const newStatus = guard.status === 'available' ? 'off-duty' : 'available';
+
+  fetch(`/api/guards/${guardId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  }).catch(() => {
+    // Local fallback
+    guard.status = newStatus;
+    renderAll();
+  });
+}
+
 function addLocalAlert(alert) {
   const existing = alerts.find(a => a.id === alert.id);
   if (!existing) {
@@ -399,11 +591,13 @@ function addLocalAlert(alert) {
 }
 
 function renderMap3DAnd2D() {
-  // Clear 2D highlights
+  // Clear 2D highlights and guard badges
   document.querySelectorAll('.room').forEach(el => {
     el.classList.remove('flagged');
     const pulse = el.querySelector('.pulse-dot');
     if (pulse) pulse.remove();
+    const gBadge = el.querySelector('.guard-badge-2d');
+    if (gBadge) gBadge.remove();
   });
 
   // Reset 3D Room Colors
@@ -435,6 +629,22 @@ function renderMap3DAnd2D() {
       }
     }
   });
+
+  // Add Guard Badges to 2D Grid
+  guardsData.forEach(g => {
+    const roomEl = document.querySelector(`.room[data-room-id="${g.assignedRoom}"]`);
+    if (roomEl && !roomEl.querySelector('.guard-badge-2d')) {
+      const badge = document.createElement('div');
+      badge.className = `guard-badge-2d ${g.status}`;
+      badge.textContent = '🛡';
+      badge.title = `${g.name} (${g.status})`;
+      roomEl.appendChild(badge);
+    }
+  });
+
+  // Update 3D guard markers and connection lines
+  updateGuardMarkers3D();
+  updateConnectionLines();
 }
 
 function renderAlertFeed() {
@@ -449,13 +659,24 @@ function renderAlertFeed() {
 
   el.innerHTML = alerts.map(a => {
     const isResolved = a.status === 'RESOLVED';
+    const guardInfo = a.nearestGuard
+      ? `<div class="alert-guard-info">
+           <span class="guard-icon">🛡</span>
+           Nearest: <strong>${a.nearestGuard.name}</strong> — Room ${a.nearestGuard.assignedRoom} — ${a.nearestGuard.distance} units away
+         </div>`
+      : `<div class="alert-guard-info" style="color: #8E8E93;">
+           <span class="guard-icon" style="border-color: #8E8E93; background: #F0F0F4;">—</span>
+           No available guards
+         </div>`;
+
     return `
       <div class="alert-row ${isResolved ? 'resolved' : ''}">
         <div class="alert-left">
           <div class="alert-dot"></div>
           <div>
-            <div class="alert-room">${a.roomName} ${a.confidence ? `<small style="color:var(--blue);">(${a.confidence}% match)</small>` : ''}</div>
+            <div class="alert-room">${a.primaryRoomName || a.roomName || (a.predictions && a.predictions.most_probable ? 'Room ' + a.predictions.most_probable.room : 'Location Resolved')} ${a.confidence ? `<small style="color:var(--blue);">(${a.confidence}% match)</small>` : ''}</div>
             <div class="alert-meta">${a.id} · ${a.studentName || 'Student'} · Reported ${fmtTime(a.createdAt)}${isResolved ? ' · Resolved ' + fmtTime(a.resolvedAt) : ''}</div>
+            ${!isResolved ? guardInfo : ''}
           </div>
         </div>
         ${isResolved
@@ -470,32 +691,125 @@ function renderAlertFeed() {
   }).join('');
 }
 
+function renderGuardsPanel() {
+  const el = document.getElementById('guards-panel');
+  const summaryEl = document.getElementById('guards-summary');
+
+  const availableCount = guardsData.filter(g => g.status === 'available').length;
+  const respondingCount = guardsData.filter(g => g.status === 'responding').length;
+
+  summaryEl.textContent = `${availableCount} available${respondingCount > 0 ? ` · ${respondingCount} responding` : ''}`;
+
+  // Update pill color based on available count
+  if (availableCount === 0) {
+    summaryEl.style.color = 'var(--red)';
+    summaryEl.style.background = 'var(--red-soft)';
+    summaryEl.style.borderColor = 'rgba(255, 59, 48, 0.2)';
+  } else {
+    summaryEl.style.color = 'var(--green)';
+    summaryEl.style.background = 'var(--green-soft)';
+    summaryEl.style.borderColor = 'rgba(52, 199, 89, 0.2)';
+  }
+
+  if (guardsData.length === 0) {
+    el.innerHTML = `<div class="empty-state">No guards registered.</div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="guards-grid">${guardsData.map(g => {
+    const initials = g.name.split(' ').map(w => w[0]).join('');
+    const toggleLabel = g.status === 'available' ? 'Set Off-Duty' : (g.status === 'off-duty' ? 'Set Available' : 'Responding...');
+    const toggleDisabled = g.status === 'responding' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+
+    return `
+      <div class="guard-card">
+        <div class="guard-left">
+          <div class="guard-avatar ${g.status}">${initials}</div>
+          <div>
+            <div class="guard-name">${g.name}</div>
+            <div class="guard-room">Room ${g.assignedRoom}</div>
+          </div>
+        </div>
+        <div class="guard-right">
+          <span class="guard-status-pill ${g.status}">${g.status.replace('-', ' ')}</span>
+          <button class="guard-toggle-btn" onclick="toggleGuardStatus('${g.id}')" ${toggleDisabled}>${toggleLabel}</button>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
 function renderAll() {
   renderMap3DAnd2D();
   renderAlertFeed();
+  renderGuardsPanel();
 }
 
-// Connect to WebSockets for live ESP32 updates
-function initWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const ws = new WebSocket(`${protocol}//${window.location.host}`);
+let isPollingActive = false;
 
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    if (msg.type === 'INIT') {
-      alerts = msg.alerts || [];
-      renderAll();
-    } else if (msg.type === 'NEW_ALERT') {
-      addLocalAlert(msg.alert);
-    } else if (msg.type === 'ALERT_RESOLVED') {
-      const alert = alerts.find(a => a.id === msg.alert.id);
-      if (alert) {
-        alert.status = 'RESOLVED';
-        alert.resolvedAt = msg.alert.resolvedAt;
+function startPollingFallback() {
+  if (isPollingActive) return;
+  isPollingActive = true;
+  console.log('🔄 WebSockets unavailable (Serverless/Vercel mode). Active HTTP polling (2s)...');
+  
+  setInterval(async () => {
+    try {
+      const res = await fetch('/api/alerts');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.alerts && JSON.stringify(data.alerts) !== JSON.stringify(alerts)) {
+          const oldLen = alerts.length;
+          alerts = data.alerts;
+          if (alerts.length > oldLen) {
+            playAlertSound();
+          }
+          renderAll();
+        }
+      }
+    } catch (e) {
+      console.warn('Polling fallback warning:', e.message);
+    }
+  }, 2000);
+}
+
+// Connect to WebSockets for live ESP32 updates (with Vercel serverless polling fallback)
+function initWebSocket() {
+  try {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'INIT') {
+        alerts = msg.alerts || [];
+        guardsData = msg.guards || [];
+        renderAll();
+      } else if (msg.type === 'NEW_ALERT' || msg.type === 'PROBABILITY_ALERT_3TIER') {
+        addLocalAlert(msg.alert);
+        playAlertSound();
+      } else if (msg.type === 'ALERT_RESOLVED') {
+        const alert = alerts.find(a => a.id === msg.alert.id);
+        if (alert) {
+          alert.status = 'RESOLVED';
+          alert.resolvedAt = msg.alert.resolvedAt;
+          renderAll();
+        }
+      } else if (msg.type === 'GUARD_UPDATE') {
+        guardsData = msg.guards || [];
         renderAll();
       }
-    }
-  };
+    };
+
+    ws.onerror = () => {
+      startPollingFallback();
+    };
+
+    ws.onclose = () => {
+      startPollingFallback();
+    };
+  } catch (e) {
+    startPollingFallback();
+  }
 }
 
 // --- INIT APP ---

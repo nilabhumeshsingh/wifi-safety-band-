@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NightGuard - 3D Interactive Floor Layout</title>
+<title>CIS Security - 3D Interactive Floor Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <!-- Three.js + OrbitControls for 3D Vector Rendering -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -13,9 +16,9 @@
 
 <header>
   <div class="brand">
-    <div class="brand-mark"></div>
+    <img src="logo.png" alt="CIS Security" class="brand-logo">
     <div>
-      <div class="brand-name">NightGuard</div>
+      <div class="brand-name">CIS Security</div>
       <div class="brand-sub">4th Floor Campus Plan (AB2)</div>
     </div>
   </div>
@@ -34,6 +37,15 @@
         <div id="active-count" class="count-pill">0 active</div>
       </div>
       <div id="alert-feed"></div>
+    </div>
+
+    <!-- GUARDS ON DUTY PANEL -->
+    <div class="card">
+      <div class="top-row">
+        <div class="section-title">Guards on Duty</div>
+        <div id="guards-summary" class="guards-summary-pill">0 available</div>
+      </div>
+      <div id="guards-panel"></div>
     </div>
 
     <!-- BOTTOM SECTION: ENTIRE FLOOR PLAN LAYOUT (2D / 3D INTEGRATED) -->

@@ -282,16 +282,25 @@ function getAllRoomFingerprints() {
 // 3-Tier Probability Vector Matching Algorithm
 function locateDevice(userSignals) {
   // Normalize userSignals into map: { BSSID: signal_percent }
+  // FILTER: Only process VITBPL campus SSIDs or BSSIDs starting with 68:28:CF
   const userMap = {};
   if (Array.isArray(userSignals)) {
     userSignals.forEach(item => {
       if (item.bssid) {
-        userMap[item.bssid.toUpperCase()] = parseInt(item.signal) || 0;
+        const bssidUpper = item.bssid.toUpperCase();
+        const ssid = (item.ssid || '').toUpperCase();
+        const isVitbpl = ssid.includes('VITBPL') || bssidUpper.startsWith('68:28:CF');
+        if (isVitbpl || !item.ssid) {
+          userMap[bssidUpper] = parseInt(item.signal) || 0;
+        }
       }
     });
   } else if (typeof userSignals === 'object' && userSignals !== null) {
     Object.keys(userSignals).forEach(bssid => {
-      userMap[bssid.toUpperCase()] = parseInt(userSignals[bssid]) || 0;
+      const bssidUpper = bssid.toUpperCase();
+      if (bssidUpper.startsWith('68:28:CF')) {
+        userMap[bssidUpper] = parseInt(userSignals[bssid]) || 0;
+      }
     });
   }
 

@@ -1,29 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a2235;
-  --bg-card-hover: #1f2b42;
-  --bg-input: #0f1629;
-  --border: #2a3550;
-  --border-focus: #6366f1;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.3);
-  --green: #10b981;
-  --green-glow: rgba(16, 185, 129, 0.2);
-  --yellow: #f59e0b;
-  --orange: #f97316;
-  --red: #ef4444;
-  --red-glow: rgba(239, 68, 68, 0.15);
-  --cyan: #06b6d4;
-  --radius: 12px;
+  --bg-primary: #F5F5F7;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F0F0F4;
+  --bg-input: #F5F5F7;
+  --border: #E4E4E7;
+  --border-focus: #0071E3;
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-muted: #86868B;
+  --accent: #0071E3;
+  --accent-glow: rgba(0, 113, 227, 0.15);
+  --green: #34C759;
+  --green-glow: rgba(52, 199, 89, 0.15);
+  --yellow: #FF9500;
+  --orange: #FF9500;
+  --red: #FF3B30;
+  --red-glow: rgba(255, 59, 48, 0.15);
+  --cyan: #30B0C7;
+  --radius: 14px;
   --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -33,11 +33,13 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: "SF Pro Display", "SF Pro Text", "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Background pattern */

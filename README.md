@@ -115,7 +115,7 @@ The ESP module and the web stack communicate over standard Wi-Fi using HTTP. The
 
 ---
 
-## 🚧 Future Work
+## 🚧 Future Work/Scaling
 
 * Add GPS fallback for outdoor localization
 * Finalize and document firmware libraries and core loop logic

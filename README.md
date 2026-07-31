@@ -2,13 +2,13 @@
 
 > **Low-Power Campus Wearable for One-Touch Emergency Alert & Wi-Fi BSSID Indoor Localization**
 
-The **Assistive Safety Band** is an accessible, pocket-friendly wearable designed to give university students peace of mind while walking across campus — especially indoors, in dorms, and in academic buildings where GPS is slow or unreliable. Equipped with a long-press SOS trigger and instant Wi-Fi BSSID localization, the band dispatches real-time location telemetry directly to a central monitoring web dashboard the moment an emergency is signaled.
+The **Assistive Safety Band** is a low-power wearable that gives students instant, one-touch access to emergency help using Wi-Fi-based indoor localization. A single long-press on the SOS button triggers real-time location sharing to a monitoring dashboard — no GPS, no app, no setup.
 
 ---
 
 ## 📌 Description
 
-Students walking on campus face situations where every second counts. Traditional safety solutions — unlocking a smartphone, launching an app, or waiting 30–60 seconds for a GPS satellite lock — are too slow, unreliable indoors, and drain phone batteries fast.
+The **Assistive Safety Band** is an accessible, pocket-friendly wearable designed to give university students peace of mind while walking across campus — especially indoors, in dorms, and in academic buildings where GPS is slow or unreliable. Equipped with a long-press SOS trigger and instant Wi-Fi BSSID localization, the band dispatches real-time location telemetry directly to a central monitoring web dashboard the moment an emergency is signaled.
 
 Our prototype solves this with a dedicated, low-power **ESP-based wearable band** that does one job extremely well: sound the alarm and share location, instantly, with nothing to unlock or configure.
 
@@ -54,7 +54,7 @@ The device operates in a low-power idle state to conserve battery, and only beco
 ```
 Long-press SOS button
         ↓
-ESP module scans nearby Wi-Fi BSSIDs + RSSI
+ESP module scans nearby Wi-Fi BSSIDs 
         ↓
 Data packaged as JSON, sent via HTTP POST over Wi-Fi
         ↓
@@ -68,7 +68,7 @@ React dashboard updates in real time with the alert + location
 ```
 
 1. **Trigger Phase** — The student long-presses the tactile SOS button. A long-press (rather than a single tap) is used deliberately to avoid false alarms from accidental contact in a pocket or bag.
-2. **Wi-Fi BSSID Scanning** — Instead of a power-hungry GPS lock, the ESP module runs a passive scan of surrounding Wi-Fi networks, capturing MAC addresses (BSSIDs) and signal strength (RSSI) for each.
+2. **Wi-Fi BSSID Scanning** — Instead of a power-hungry GPS lock, the ESP module runs a passive scan of surrounding Wi-Fi networks, capturing MAC addresses (BSSIDs)
 3. **Packet Transmission** — The band formats the scan results into a JSON payload and sends an HTTP POST request to the backend.
 4. **Location Resolution** — The backend matches the received BSSIDs against a pre-mapped lookup table of known campus access points to determine the student's building/zone.
 5. **Live Dashboard Update** — The resolved alert (location, timestamp, student identifier) is pushed to the monitoring dashboard for campus security/response staff to view.
@@ -101,7 +101,7 @@ Location is resolved entirely via a **Wi-Fi BSSID lookup table** — a pre-built
 
 ### Hardware–Software Integration
 
-The ESP module and the web stack communicate over standard Wi-Fi using HTTP. The hardware side is responsible only for detecting the SOS trigger and collecting nearby BSSID/RSSI data — all heavier processing (location resolution, storage, and visualization) is offloaded to the backend and dashboard. This keeps the on-device firmware lightweight and power-efficient, which directly supports longer battery life.
+The ESP module and the web stack communicate over standard Wi-Fi using HTTP. The hardware side is responsible only for detecting the SOS trigger and collecting nearby BSSID data — all heavier processing (location resolution, storage, and visualization) is offloaded to the backend and dashboard. This keeps the on-device firmware lightweight and power-efficient, which directly supports longer battery life.
 
 ---
 

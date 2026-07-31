@@ -88,10 +88,9 @@ Location is resolved entirely via a **Wi-Fi BSSID lookup table** — a pre-built
 
 ### Website / Dashboard
 
-* **Frontend:** Built with React.js. *[TODO — note any UI/map library used, e.g. Tailwind, Leaflet, Mapbox]*
+* **Frontend:** Built with React.js.
 * **Backend:** Node.js/Express and FastAPI handle request routing, BSSID-to-location resolution, and communication with Supabase.
 * **Database:** Supabase stores alert records, resolved locations, and timestamps.
-* **Dashboard Contents:** *[TODO — describe exactly what the dashboard displays during the demo, e.g. live alert list, resolved location/zone, timestamp, student ID, status indicator, map view, etc.]*
 
 ### Hardware–Software Integration
 

@@ -138,15 +138,8 @@ function getAllRoomFingerprints() {
   const fingerprints = [];
 
   // 1. Load from CSV if present
-  const csvCandidates = [
-    path.join(__dirname, 'data/wifi-mappings(8).csv'),
-    path.join(__dirname, '../wifi-mappings(8).csv'),
-    path.join(process.cwd(), 'data/wifi-mappings(8).csv'),
-    path.join(process.cwd(), 'wifi-mappings(8).csv')
-  ];
-  let csvPath = csvCandidates.find(p => fs.existsSync(p));
-
-  if (csvPath) {
+  const csvPath = path.join(__dirname, '../wifi-mappings(8).csv');
+  if (fs.existsSync(csvPath)) {
     try {
       const content = fs.readFileSync(csvPath, 'utf-8');
       const lines = content.split('\n');
@@ -191,17 +184,9 @@ function getAllRoomFingerprints() {
   }
 
   // 2. Load from mappings.json
-  const jsonCandidates = [
-    path.join(__dirname, 'data/mappings.json'),
-    path.join(__dirname, '../mapper/mappings.json'),
-    path.join(process.cwd(), 'data/mappings.json'),
-    path.join(process.cwd(), 'mapper/mappings.json')
-  ];
-  let jsonPath = jsonCandidates.find(p => fs.existsSync(p));
-
-  if (jsonPath) {
+  if (fs.existsSync(MAPPINGS_FILE)) {
     try {
-      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      const data = JSON.parse(fs.readFileSync(MAPPINGS_FILE, 'utf-8'));
       if (data.locations && Array.isArray(data.locations)) {
         for (const loc of data.locations) {
           const networks = {};

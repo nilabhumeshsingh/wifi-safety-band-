@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Chunk-based flash writer for ESP32-C6 with unstable USB Serial/JTAG.
-Splits the binary into small chunks and writes each with esptool,
-reconnecting between chunks to avoid USB disconnect.
+Robust Chunk-based flash writer for ESP32-C6.
+Splits binary into 64KB chunks, auto-retries up to 10 times per chunk,
+and re-scans available serial ports automatically on USB resets.
 """
 import subprocess, sys, os, time, glob
 
@@ -12,7 +12,7 @@ CHUNK_SIZE = 64 * 1024  # 64KB chunks
 TEMP_DIR = "/tmp/esp32_chunks"
 
 def find_port():
-    ports = sorted(glob.glob("/dev/ttyACM*"))
+    ports = sorted(glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
     return ports[0] if ports else None
 
 def main():
@@ -38,55 +38,46 @@ def main():
         print(f"CHUNK {i+1}/{num_chunks}: {len(chunk)} bytes at 0x{flash_addr:08X}")
         print(f"{'='*60}")
         
-        # Find current port
-        port = find_port()
-        if not port:
-            print("ERROR: No serial port found! Waiting 5s...")
-            time.sleep(5)
+        chunk_success = False
+        retries = 10
+        
+        for attempt in range(retries):
             port = find_port()
             if not port:
-                print("FATAL: No serial port after wait. Aborting.")
-                sys.exit(1)
-        
-        print(f"Using port: {port}")
-        
-        # Use esptool with stub (faster per chunk) but only writing small chunk
-        cmd = [
-            sys.executable, "-m", "esptool",
-            "--chip", "esp32c6",
-            "--port", port,
-            "--baud", "460800",
-            "--after", "no-reset",
-            "write-flash",
-            "--flash-mode", "dio",
-            f"0x{flash_addr:X}", chunk_file
-        ]
-        
-        retries = 3
-        for attempt in range(retries):
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                print(f"  [Attempt {attempt+1}/{retries}] Waiting for serial port to appear...")
+                time.sleep(2)
+                continue
+            
+            print(f"  [Attempt {attempt+1}/{retries}] Writing via {port}...")
+            
+            cmd = [
+                sys.executable, "-m", "esptool",
+                "--chip", "esp32c6",
+                "--port", port,
+                "--baud", "230400",
+                "--after", "no-reset",
+                "write-flash",
+                "--flash-mode", "dio",
+                f"0x{flash_addr:X}", chunk_file
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
             if result.returncode == 0:
                 print(f"✓ Chunk {i+1} written successfully!")
+                chunk_success = True
                 break
             else:
-                print(f"Attempt {attempt+1} failed. Output:")
-                print(result.stdout[-200:] if len(result.stdout) > 200 else result.stdout)
-                print(result.stderr[-200:] if len(result.stderr) > 200 else result.stderr)
-                if attempt < retries - 1:
-                    print("Waiting 3s before retry...")
-                    time.sleep(3)
-                    port = find_port()
-                    if port:
-                        cmd[5] = port
-                else:
-                    print(f"FAILED to write chunk {i+1} after {retries} attempts!")
-                    sys.exit(1)
+                print(f"  Attempt {attempt+1} failed. Retrying in 2s...")
+                time.sleep(2)
         
-        # Small delay between chunks to let USB recover
+        if not chunk_success:
+            print(f"❌ FAILED to write chunk {i+1} after {retries} attempts!")
+            sys.exit(1)
+        
         if i < num_chunks - 1:
-            time.sleep(2)
+            time.sleep(1.5)
     
-    # Final: hard reset the board
+    # Final hard reset
     print(f"\n{'='*60}")
     print("ALL CHUNKS WRITTEN! Resetting board...")
     print(f"{'='*60}")
@@ -98,7 +89,7 @@ def main():
             "--after", "hard-reset", "read-mac"
         ], timeout=10)
     
-    print("\n✅ FLASH COMPLETE! Board should be running new firmware now.")
+    print("\n✅ FLASH COMPLETE! Board is running the standalone Vercel firmware now.")
 
 if __name__ == "__main__":
     main()

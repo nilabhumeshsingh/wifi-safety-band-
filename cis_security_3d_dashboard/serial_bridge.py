@@ -5,7 +5,7 @@ import requests
 import glob
 import os
 
-TARGET_URL = 'https://cissecurity3ddashboard.vercel.app/api/sos'
+TARGET_URL = 'http://localhost:3000/api/sos'
 
 print("\n" + "="*80)
 print(" 📡 VITBPL LIVE TERMINAL SCAN MONITOR & 3D GEOLOCATION BRIDGE")

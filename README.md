@@ -33,7 +33,6 @@ The device is built around **Wi-Fi positioning (Wi-Fi BSSID scanning)** rather t
 | **Power Source** | Rechargeable LiPo battery, 5–7W capacity |
 | **Charging** | USB-C / TP4056 charge controller *(confirm if used)* |
 | **Enclosure** | Pocket-clip form factor |
-| **Visibility Feature** | None in current prototype *(future work — see Cons)* |
 
 
 ### Software & Cloud Infrastructure
@@ -84,10 +83,6 @@ React dashboard updates in real time with the alert + location
 // #include <ArduinoJson.h>
 ```
 
-### Firmware Logic (Core Loop)
-
-> *[TODO — core loop / interrupt logic not finalized yet. Once decided, summarize here: how the long-press is detected, how the scan is triggered, and the structure of the JSON payload sent to the backend.]*
-
 ### Localization Method
 
 Location is resolved entirely via a **Wi-Fi BSSID lookup table** — a pre-built database mapping known campus access point BSSIDs to physical locations (building, floor, or zone). This prototype is **purely indoor-focused**, with no GPS fallback for outdoor use in this version.
@@ -118,17 +113,15 @@ The ESP module and the web stack communicate over standard Wi-Fi using HTTP. The
 * **BSSID Database Dependency** — Geolocation accuracy relies on an up-to-date mapping of campus access points.
 * **Initial Wi-Fi Handshake Latency** — First-time network association (especially on unsecured or enterprise Wi-Fi) can add a few seconds of delay if the device isn't pre-configured/pre-connected.
 * **Indoor-Only Coverage** — Current version has no GPS fallback, so it is not designed for outdoor/open-campus localization.
-* **No Visibility Feature** — Unlike some safety wearables, this prototype does not currently include a physical visibility aid (e.g., LED, reflective material).
 
 ---
 
 ## 🚧 Future Work
 
 * Add GPS fallback for outdoor localization
-* Implement deep-sleep mode for extended standby battery life
-* Add a visibility feature (LED strip / reflective casing)
 * Finalize and document firmware libraries and core loop logic
 * Pre-cache Wi-Fi handshake to reduce first-connection latency
+*  Implement deep-sleep mode for extended standby battery life
 
 ---
 

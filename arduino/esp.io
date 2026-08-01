@@ -1,18 +1,4 @@
-/*
-  =============================================================================
-  ESP32-C6 Zero — VITBPL Wi-Fi Location Tracker & Serial Display
-  =============================================================================
-  Hardware: ESP32-C6 Zero (or ESP32-C6 / ESP32-S3 / ESP32)
-  
-  Function:
-    1. Scans nearby Wi-Fi networks and filters for campus "VITBPL" Access Points.
-    2. Displays captured AP details (SSID, BSSID/MAC, Signal %, Channel).
-    3. Posts payload to backend server /api/locate endpoint over Wi-Fi.
-    4. Receives and displays 3-Tier Location Probabilities (Most, Medium, Less).
-    
-  NEW: Scan is triggered ONLY by a long-press on GPIO 20.
-  =============================================================================
-*/
+
 
 #include <WiFi.h>
 #include <HTTPClient.h>

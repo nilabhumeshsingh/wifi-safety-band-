@@ -9,7 +9,38 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
-const MAPPINGS_FILE = path.join(__dirname, '../mapper/mappings.json');
+const MAPPINGS_FILE = path.join(__dirname, 'data/mappings.json');
+const MAPPINGS_FILE_ALT = path.join(__dirname, '../mapper/mappings.json');
+
+// Pre-load mappings at module init for Vercel serverless reliability
+let _cachedMappings = null;
+function getMappingsData() {
+  if (_cachedMappings) return _cachedMappings;
+  try {
+    // Try primary path (data/ dir bundled with Vercel function)
+    if (fs.existsSync(MAPPINGS_FILE)) {
+      _cachedMappings = JSON.parse(fs.readFileSync(MAPPINGS_FILE, 'utf-8'));
+      return _cachedMappings;
+    }
+  } catch (e) { /* continue */ }
+  try {
+    // Try alternate path (mapper/ dir for local dev)
+    if (fs.existsSync(MAPPINGS_FILE_ALT)) {
+      _cachedMappings = JSON.parse(fs.readFileSync(MAPPINGS_FILE_ALT, 'utf-8'));
+      return _cachedMappings;
+    }
+  } catch (e) { /* continue */ }
+  try {
+    // Static require fallback (Vercel bundles this at build time)
+    _cachedMappings = require('./data/mappings.json');
+    return _cachedMappings;
+  } catch (e) { /* continue */ }
+  console.error('CRITICAL: Could not load mappings.json from any path!');
+  return { locations: [] };
+}
+// Eagerly load on module init
+_cachedMappings = getMappingsData();
+console.log(`[INIT] Loaded ${_cachedMappings?.locations?.length || 0} room fingerprint locations`);
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -164,41 +195,31 @@ async function logEventToSupabase(deviceId, scanData, resolvedRoom, confidence) 
   }
 }
 
-// Load all room fingerprints from CSV and mappings.json
+// Load all room fingerprints from cached mappings data
 function getAllRoomFingerprints() {
   const fingerprints = [];
+  const data = getMappingsData();
 
-  // Load from mappings.json (using require for static Vercel bundling + fs fallback)
-  try {
-    let data = null;
-    if (fs.existsSync(MAPPINGS_FILE)) {
-      data = JSON.parse(fs.readFileSync(MAPPINGS_FILE, 'utf-8'));
-    } else {
-      data = require('./data/mappings.json');
-    }
-    if (data && data.locations && Array.isArray(data.locations)) {
-      for (const loc of data.locations) {
-        const networks = {};
-        if (loc.networks && Array.isArray(loc.networks)) {
-          loc.networks.forEach(net => {
-            if (net.bssid) {
-              networks[net.bssid.toUpperCase().trim()] = parseInt(net.signal) || 0;
-            }
-          });
-        }
-        if (Object.keys(networks).length > 0) {
-          fingerprints.push({
-            room: loc.room,
-            building: loc.building || 'AB2',
-            floor: loc.floor || '4',
-            description: loc.description || '',
-            networks
-          });
-        }
+  if (data && data.locations && Array.isArray(data.locations)) {
+    for (const loc of data.locations) {
+      const networks = {};
+      if (loc.networks && Array.isArray(loc.networks)) {
+        loc.networks.forEach(net => {
+          if (net.bssid) {
+            networks[net.bssid.toUpperCase().trim()] = parseInt(net.signal) || 0;
+          }
+        });
+      }
+      if (Object.keys(networks).length > 0) {
+        fingerprints.push({
+          room: loc.room,
+          building: loc.building || 'AB2',
+          floor: loc.floor || '4',
+          description: loc.description || '',
+          networks
+        });
       }
     }
-  } catch (e) {
-    console.error('Error loading JSON fingerprints:', e.message);
   }
 
   return fingerprints;
@@ -436,8 +457,23 @@ app.get('/api/alerts', async (req, res) => {
           const predictions = evalRes.success ? evalRes.predictions : null;
           const mostProbable = predictions ? predictions.most_probable : null;
 
-          const rawRoom = ev.resolved_room || (mostProbable ? mostProbable.room : '414b');
-          const cleanRoomId = String(rawRoom).toLowerCase().replace(/[^a-z0-9]/g, '');
+          // Prefer live re-evaluation if it found matching BSSIDs; fall back to stored resolved_room
+          let roomName, roomConfidence, cleanRoomId;
+          if (mostProbable && mostProbable.metrics && mostProbable.metrics.common_bssids > 0) {
+            // Re-evaluation succeeded with actual BSSID matches
+            roomName = `Room ${mostProbable.room} (${mostProbable.building} Fl ${mostProbable.floor})`;
+            roomConfidence = mostProbable.confidence_score;
+            cleanRoomId = String(mostProbable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
+          } else if (ev.resolved_room) {
+            // Use stored Supabase value
+            roomName = ev.resolved_room.startsWith('Room') ? ev.resolved_room : `Room ${ev.resolved_room}`;
+            roomConfidence = ev.confidence || 99.9;
+            cleanRoomId = String(ev.resolved_room).toLowerCase().replace(/[^a-z0-9]/g, '');
+          } else {
+            roomName = 'Room 414b';
+            roomConfidence = 0;
+            cleanRoomId = '414b';
+          }
 
           const isResolved = ev.status && String(ev.status).toLowerCase() === 'resolved';
 
@@ -447,8 +483,8 @@ app.get('/api/alerts', async (req, res) => {
             studentName: 'Student (Button Press)',
             predictions: predictions,
             primaryRoomId: cleanRoomId,
-            primaryRoomName: ev.resolved_room ? (ev.resolved_room.startsWith('Room') ? ev.resolved_room : `Room ${ev.resolved_room}`) : (mostProbable ? `Room ${mostProbable.room}` : 'Room 414b'),
-            confidence: ev.confidence || (mostProbable ? mostProbable.confidence_score : 99.9),
+            primaryRoomName: roomName,
+            confidence: roomConfidence,
             nearestGuard: null,
             status: isResolved ? 'RESOLVED' : 'ACTIVE',
             createdAt: ev.triggered_at ? new Date(ev.triggered_at).getTime() : Date.now()

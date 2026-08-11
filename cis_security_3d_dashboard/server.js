@@ -168,53 +168,7 @@ async function logEventToSupabase(deviceId, scanData, resolvedRoom, confidence) 
 function getAllRoomFingerprints() {
   const fingerprints = [];
 
-  // 1. Load from CSV if present
-  const csvPath = path.join(__dirname, '../wifi-mappings(8).csv');
-  if (fs.existsSync(csvPath)) {
-    try {
-      const content = fs.readFileSync(csvPath, 'utf-8');
-      const lines = content.split('\n');
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        const regex = /(?:^|,)(?:"([^"]*)"|([^,]*))/g;
-        const matches = [];
-        let match;
-        while ((match = regex.exec(line)) !== null) {
-          matches.push(match[1] !== undefined ? match[1] : match[2]);
-        }
-        if (matches.length >= 6) {
-          const room = matches[0] || '';
-          const building = matches[1] || '';
-          const floor = matches[2] || '';
-          const description = matches[3] || '';
-          const wifiStr = matches[5] || '';
-          
-          const networks = {};
-          if (wifiStr) {
-            wifiStr.split(';').forEach(item => {
-              item = item.trim();
-              if (!item) return;
-              const parts = item.split(':');
-              if (parts.length >= 7) {
-                const bssid = parts.slice(0, 6).join(':').toUpperCase();
-                const sig = parseInt(parts[6].replace('%', '')) || 0;
-                networks[bssid] = sig;
-              }
-            });
-          }
-
-          if (Object.keys(networks).length > 0) {
-            fingerprints.push({ room, building, floor, description, networks });
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error loading CSV fingerprints:', e.message);
-    }
-  }
-
-  // 2. Load from mappings.json (using require for static Vercel bundling + fs fallback)
+  // Load from mappings.json (using require for static Vercel bundling + fs fallback)
   try {
     let data = null;
     if (fs.existsSync(MAPPINGS_FILE)) {
@@ -228,15 +182,15 @@ function getAllRoomFingerprints() {
         if (loc.networks && Array.isArray(loc.networks)) {
           loc.networks.forEach(net => {
             if (net.bssid) {
-              networks[net.bssid.toUpperCase()] = parseInt(net.signal) || 0;
+              networks[net.bssid.toUpperCase().trim()] = parseInt(net.signal) || 0;
             }
           });
         }
         if (Object.keys(networks).length > 0) {
           fingerprints.push({
             room: loc.room,
-            building: loc.building || '',
-            floor: loc.floor || '',
+            building: loc.building || 'AB2',
+            floor: loc.floor || '4',
             description: loc.description || '',
             networks
           });

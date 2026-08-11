@@ -255,19 +255,15 @@ function locateDevice3Tier(userSignals) {
   const userMap = {};
   if (Array.isArray(userSignals)) {
     userSignals.forEach(item => {
-      if (item.bssid) {
-        const bssidUpper = item.bssid.toUpperCase();
-        const ssid = (item.ssid || '').toUpperCase();
-        const isVitbpl = ssid.includes('VITBPL') || bssidUpper.startsWith('68:28:CF');
-        if (isVitbpl || !item.ssid) {
-          userMap[bssidUpper] = parseInt(item.signal) || 0;
-        }
+      if (item && item.bssid) {
+        const bssidUpper = item.bssid.toUpperCase().trim();
+        userMap[bssidUpper] = parseInt(item.signal) || 0;
       }
     });
   } else if (typeof userSignals === 'object' && userSignals !== null) {
     Object.keys(userSignals).forEach(bssid => {
-      const bssidUpper = bssid.toUpperCase();
-      if (bssidUpper.startsWith('68:28:CF')) {
+      const bssidUpper = bssid.toUpperCase().trim();
+      if (bssidUpper.includes(':')) {
         userMap[bssidUpper] = parseInt(userSignals[bssid]) || 0;
       }
     });

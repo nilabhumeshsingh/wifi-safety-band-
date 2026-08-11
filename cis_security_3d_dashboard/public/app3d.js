@@ -1084,6 +1084,25 @@ async function resolve(id) {
   }
 }
 
+// Resolve all active alerts (UI + Backend POST call)
+async function resolveAllAlerts() {
+  try {
+    const now = Date.now();
+    alerts.forEach(a => {
+      a.status = 'RESOLVED';
+      if (!a.resolvedAt) a.resolvedAt = now;
+    });
+    guardsData.forEach(g => {
+      if (g.status === 'responding') g.status = 'available';
+    });
+    renderAll();
+
+    await fetch('/api/alerts/resolve-all', { method: 'POST' });
+  } catch (err) {
+    console.error('Error resolving all alerts:', err);
+  }
+}
+
 function renderGuardsPanel() {
   const el = document.getElementById('guards-panel');
   const summaryEl = document.getElementById('guards-summary');
@@ -1181,6 +1200,13 @@ function initWebSocket() {
           alert.resolvedAt = msg.alert.resolvedAt;
           renderAll();
         }
+      } else if (msg.type === 'ALL_ALERTS_RESOLVED') {
+        if (msg.alerts) alerts = msg.alerts;
+        else {
+          alerts.forEach(a => { a.status = 'RESOLVED'; });
+        }
+        if (msg.guards) guardsData = msg.guards;
+        renderAll();
       } else if (msg.type === 'GUARD_UPDATE') {
         guardsData = msg.guards || [];
         renderAll();

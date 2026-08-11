@@ -522,6 +522,49 @@ app.get('/api/alerts', async (req, res) => {
   res.json({ alerts });
 });
 
+// HTTP API: Resolve all active alerts (updates in-memory + Supabase DB)
+const handleResolveAll = async (req, res) => {
+  const now = Date.now();
+  let updatedCount = 0;
+
+  alerts.forEach(a => {
+    if (a.status !== 'RESOLVED') {
+      a.status = 'RESOLVED';
+      a.resolvedAt = now;
+      updatedCount++;
+    }
+  });
+
+  guards.forEach(g => {
+    if (g.status === 'responding') {
+      g.status = 'available';
+      g.lastSeen = now;
+    }
+  });
+
+  broadcast({ type: 'ALL_ALERTS_RESOLVED', alerts, guards });
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/sos_events?status=neq.resolved`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ status: 'resolved' })
+    });
+  } catch (err) {
+    console.error('Supabase resolve all update error:', err.message);
+  }
+
+  res.json({ success: true, resolvedCount: updatedCount });
+};
+
+app.post('/api/alerts/resolve-all', handleResolveAll);
+app.patch('/api/alerts/resolve-all', handleResolveAll);
+
 // HTTP API: Resolve alert (updates in-memory + Supabase DB)
 app.patch('/api/alerts/:id/resolve', async (req, res) => {
   const alertId = req.params.id;

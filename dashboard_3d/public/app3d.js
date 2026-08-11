@@ -55,6 +55,7 @@ const roomsData = [
 let scene, camera, renderer, controls;
 let roomMeshes = {};
 let roomBeacons = {};
+let roomCircles = {};
 let roomLabels = [];
 let wallHeightScale = 1.0;
 let isWireframe = false;
@@ -63,6 +64,7 @@ let alerts = [];
 let guardsData = [];
 let alertSeq = 1;
 let currentActiveView = '3d';
+let showFullHistory = false;
 
 // 3D Guard markers & connection lines
 let guardMarkers3D = {};
@@ -205,6 +207,37 @@ function build3DFloorPlan() {
       beaconLight.position.set(0, wallHeight + 1, 0);
       group.add(beaconLight);
       roomBeacons[room.id] = beaconLight;
+
+      // Circular Radar Glow Disc (Smooth floor circle)
+      const radius = Math.min(room.w, room.d) * 0.45;
+      const circleGeo = new THREE.CircleGeometry(radius, 32);
+      const circleMat = new THREE.MeshBasicMaterial({
+        color: 0xFF3B30,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const discMesh = new THREE.Mesh(circleGeo, circleMat);
+      discMesh.rotation.x = -Math.PI / 2;
+      discMesh.position.y = 0.12;
+      group.add(discMesh);
+
+      // Expanding Circular Radar Wave Ring
+      const ringGeo = new THREE.RingGeometry(radius * 0.7, radius * 0.95, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xFF3B30,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.14;
+      group.add(ringMesh);
+
+      roomCircles[room.id] = { disc: discMesh, ring: ringMesh, baseRadius: radius };
 
       // Click interaction raycasting data
       wallMesh.userData = { roomId: room.id, name: room.name };
@@ -365,75 +398,121 @@ function updateConnectionLines() {
   });
 }
 
+// Helper to resolve room ID variants (e.g. "414b" -> "414") to actual 3D room mesh keys
+function resolveRoomMeshKey(roomIdStr) {
+  if (!roomIdStr) return null;
+  const cleanId = String(roomIdStr).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (roomMeshes[cleanId]) return cleanId;
+
+  // Strip sub-room letter e.g. "414b" -> "414"
+  const digitsOnly = cleanId.replace(/[^0-9]/g, '');
+  if (digitsOnly && roomMeshes[digitsOnly]) return digitsOnly;
+
+  // Substring / prefix match
+  const key = Object.keys(roomMeshes).find(k => cleanId.startsWith(k) || k.startsWith(cleanId));
+  return key || null;
+}
+
 // --- 6. ANIMATION & RENDER LOOP ---
 function animate() {
   requestAnimationFrame(animate);
 
   controls.update();
 
-  // Pulsing 3-Color Probability Lights for active scan predictions
   const time = Date.now() * 0.005;
+
+  // Reset all circular discs & rings before calculating active alerts
+  Object.values(roomCircles).forEach(c => {
+    if (c.disc) c.disc.material.opacity = 0;
+    if (c.ring) {
+      c.ring.material.opacity = 0;
+      c.ring.scale.set(1, 1, 1);
+    }
+  });
+
+  // Pulsing Circular 3-Color Radar Lights for active scan predictions
   alerts.forEach(a => {
     if (a.status === 'ACTIVE') {
       const preds = a.predictions;
       
-      // Tier 1: Most Probable (RED LIGHT 🔴)
-      const p1Room = a.primaryRoomId || (preds && preds.most_probable ? String(preds.most_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '') : a.roomId);
-      if (p1Room && roomMeshes[p1Room]) {
-        const group = roomMeshes[p1Room];
-        const wallMesh = group.getObjectByName('wallMesh');
-        const beaconLight = roomBeacons[p1Room];
-        const pulse = (Math.sin(time * 4) + 1) / 2;
-        if (wallMesh) {
-          wallMesh.material.color.setHex(0xFF3B30); // RED
-          wallMesh.material.emissive.setHex(0xFF3B30);
-          wallMesh.material.emissiveIntensity = 0.4 + pulse * 0.6;
-          wallMesh.material.opacity = 0.8 + pulse * 0.2;
+      // Tier 1: Most Probable (CIRCULAR RED RADAR 🔴)
+      const rawP1 = a.primaryRoomId || (preds && preds.most_probable ? preds.most_probable.room : a.roomId);
+      const p1Key = resolveRoomMeshKey(rawP1);
+      if (p1Key && roomMeshes[p1Key]) {
+        const cData = roomCircles[p1Key];
+        const beaconLight = roomBeacons[p1Key];
+        const pulse = (Math.sin(time * 5) + 1) / 2;
+        const ringProgress = (time * 1.6) % 1.0;
+        const ringScale = 1.0 + ringProgress * 1.1;
+        const ringFade = Math.max(0, 1.0 - ringProgress);
+
+        if (cData) {
+          // Circular Disc Pulsing Glow
+          cData.disc.material.color.setHex(0xFF3B30); // RED
+          cData.disc.material.opacity = 0.55 + pulse * 0.35;
+
+          // Expanding Circular Radar Wave Ring
+          cData.ring.material.color.setHex(0xFF3B30);
+          cData.ring.scale.set(ringScale, ringScale, 1);
+          cData.ring.material.opacity = ringFade * 0.85;
         }
+
         if (beaconLight) {
           beaconLight.color.setHex(0xFF3B30);
-          beaconLight.intensity = 3 + Math.sin(time * 6) * 2;
+          beaconLight.intensity = 6 + pulse * 4;
         }
       }
 
-      // Tier 2: Medium Probable (ORANGE LIGHT 🟠)
+      // Tier 2: Medium Probable (CIRCULAR ORANGE RADAR 🟠)
       if (preds && preds.medium_probable) {
-        const p2Room = String(preds.medium_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (p2Room && p2Room !== p1Room && roomMeshes[p2Room]) {
-          const group = roomMeshes[p2Room];
-          const wallMesh = group.getObjectByName('wallMesh');
-          const beaconLight = roomBeacons[p2Room];
-          const pulse = (Math.sin(time * 3 + 1) + 1) / 2;
-          if (wallMesh) {
-            wallMesh.material.color.setHex(0xFF9F0A); // ORANGE
-            wallMesh.material.emissive.setHex(0xFF9F0A);
-            wallMesh.material.emissiveIntensity = 0.3 + pulse * 0.4;
-            wallMesh.material.opacity = 0.7 + pulse * 0.2;
+        const p2Key = resolveRoomMeshKey(preds.medium_probable.room);
+        if (p2Key && p2Key !== p1Key && roomMeshes[p2Key]) {
+          const cData = roomCircles[p2Key];
+          const beaconLight = roomBeacons[p2Key];
+          const pulse = (Math.sin(time * 3.5 + 1) + 1) / 2;
+          const ringProgress = (time * 1.3 + 0.3) % 1.0;
+          const ringScale = 1.0 + ringProgress * 1.0;
+          const ringFade = Math.max(0, 1.0 - ringProgress);
+
+          if (cData) {
+            cData.disc.material.color.setHex(0xFF9F0A); // ORANGE
+            cData.disc.material.opacity = 0.45 + pulse * 0.3;
+
+            cData.ring.material.color.setHex(0xFF9F0A);
+            cData.ring.scale.set(ringScale, ringScale, 1);
+            cData.ring.material.opacity = ringFade * 0.75;
           }
+
           if (beaconLight) {
             beaconLight.color.setHex(0xFF9F0A);
-            beaconLight.intensity = 2 + Math.sin(time * 4) * 1;
+            beaconLight.intensity = 4 + pulse * 2.5;
           }
         }
       }
 
-      // Tier 3: Less Probable (YELLOW LIGHT 🟡)
+      // Tier 3: Less Probable (CIRCULAR YELLOW RADAR 🟡)
       if (preds && preds.less_probable) {
-        const p3Room = String(preds.less_probable.room).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (p3Room && roomMeshes[p3Room]) {
-          const group = roomMeshes[p3Room];
-          const wallMesh = group.getObjectByName('wallMesh');
-          const beaconLight = roomBeacons[p3Room];
+        const p3Key = resolveRoomMeshKey(preds.less_probable.room);
+        if (p3Key && p3Key !== p1Key && roomMeshes[p3Key]) {
+          const cData = roomCircles[p3Key];
+          const beaconLight = roomBeacons[p3Key];
           const pulse = (Math.sin(time * 2.5 + 2) + 1) / 2;
-          if (wallMesh) {
-            wallMesh.material.color.setHex(0xFFCC00); // YELLOW
-            wallMesh.material.emissive.setHex(0xFFCC00);
-            wallMesh.material.emissiveIntensity = 0.2 + pulse * 0.3;
-            wallMesh.material.opacity = 0.6 + pulse * 0.2;
+          const ringProgress = (time * 1.0 + 0.6) % 1.0;
+          const ringScale = 1.0 + ringProgress * 0.9;
+          const ringFade = Math.max(0, 1.0 - ringProgress);
+
+          if (cData) {
+            cData.disc.material.color.setHex(0xFFCC00); // YELLOW
+            cData.disc.material.opacity = 0.35 + pulse * 0.25;
+
+            cData.ring.material.color.setHex(0xFFCC00);
+            cData.ring.scale.set(ringScale, ringScale, 1);
+            cData.ring.material.opacity = ringFade * 0.65;
           }
+
           if (beaconLight) {
             beaconLight.color.setHex(0xFFCC00);
-            beaconLight.intensity = 1.5 + Math.sin(time * 3) * 0.8;
+            beaconLight.intensity = 2.5 + pulse * 1.5;
           }
         }
       }
@@ -563,6 +642,25 @@ function resolve(alertId) {
   });
 }
 
+// Resolve all active alerts (UI + Backend POST call)
+async function resolveAllAlerts() {
+  try {
+    const now = Date.now();
+    alerts.forEach(a => {
+      a.status = 'RESOLVED';
+      if (!a.resolvedAt) a.resolvedAt = now;
+    });
+    guardsData.forEach(g => {
+      if (g.status === 'responding') g.status = 'available';
+    });
+    renderAll();
+
+    await fetch('/api/alerts/resolve-all', { method: 'POST' });
+  } catch (err) {
+    console.error('Error resolving all alerts:', err);
+  }
+}
+
 function toggleGuardStatus(guardId) {
   const guard = guardsData.find(g => g.id === guardId);
   if (!guard) return;
@@ -618,7 +716,8 @@ function renderMap3DAnd2D() {
   alerts.forEach(a => {
     if (a.status === 'ACTIVE') {
       // 2D Grid Highlight
-      const el = document.querySelector(`.room[data-room-id="${a.roomId}"]`);
+      const rKey = resolveRoomMeshKey(a.primaryRoomId || (a.predictions && a.predictions.most_probable ? a.predictions.most_probable.room : a.roomId)) || a.roomId;
+      const el = document.querySelector(`.room[data-room-id="${rKey}"]`);
       if (el) {
         el.classList.add('flagged');
         if (!el.querySelector('.pulse-dot')) {
@@ -647,17 +746,40 @@ function renderMap3DAnd2D() {
   updateConnectionLines();
 }
 
+function toggleAlertHistoryMode(showAll) {
+  showFullHistory = showAll;
+  const recentBtn = document.getElementById('alert-tab-recent');
+  const historyBtn = document.getElementById('alert-tab-history');
+
+  if (recentBtn && historyBtn) {
+    if (showAll) {
+      recentBtn.classList.remove('active');
+      historyBtn.classList.add('active');
+    } else {
+      recentBtn.classList.add('active');
+      historyBtn.classList.remove('active');
+    }
+  }
+  renderAlertFeed();
+}
+
 function renderAlertFeed() {
   const el = document.getElementById('alert-feed');
   const activeCount = alerts.filter(a => a.status === 'ACTIVE').length;
   document.getElementById('active-count').textContent = `${activeCount} active`;
+
+  const totalEl = document.getElementById('history-total-count');
+  if (totalEl) totalEl.textContent = alerts.length;
 
   if (alerts.length === 0) {
     el.innerHTML = `<div class="empty-state">No active alerts. Click "Simulate SOS" to test.</div>`;
     return;
   }
 
-  el.innerHTML = alerts.map(a => {
+  // Limit feed to last 5 entries by default unless Full History is enabled
+  const displayedAlerts = showFullHistory ? alerts : alerts.slice(0, 5);
+
+  let html = displayedAlerts.map(a => {
     const isResolved = a.status === 'RESOLVED';
     const guardInfo = a.nearestGuard
       ? `<div class="alert-guard-info">
@@ -689,6 +811,19 @@ function renderAlertFeed() {
       </div>
     `;
   }).join('');
+
+  // Append "View Full History" button if there are more than 5 items and history is collapsed
+  if (!showFullHistory && alerts.length > 5) {
+    html += `
+      <div style="text-align: center; padding: 12px 0 4px 0;">
+        <button class="tool-btn" onclick="toggleAlertHistoryMode(true)" style="background: #F0F6FF; border: 1px solid #C2DCFF; color: #007AFF; font-weight: 500;">
+          📜 View All ${alerts.length} Historical Alerts (${alerts.length - 5} hidden)
+        </button>
+      </div>
+    `;
+  }
+
+  el.innerHTML = html;
 }
 
 function renderGuardsPanel() {
@@ -745,71 +880,39 @@ function renderAll() {
   renderGuardsPanel();
 }
 
-let isPollingActive = false;
-
-function startPollingFallback() {
-  if (isPollingActive) return;
-  isPollingActive = true;
-  console.log('🔄 WebSockets unavailable (Serverless/Vercel mode). Active HTTP polling (2s)...');
-  
-  setInterval(async () => {
-    try {
-      const res = await fetch('/api/alerts');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.alerts && JSON.stringify(data.alerts) !== JSON.stringify(alerts)) {
-          const oldLen = alerts.length;
-          alerts = data.alerts;
-          if (alerts.length > oldLen) {
-            playAlertSound();
-          }
-          renderAll();
-        }
-      }
-    } catch (e) {
-      console.warn('Polling fallback warning:', e.message);
-    }
-  }, 2000);
-}
-
-// Connect to WebSockets for live ESP32 updates (with Vercel serverless polling fallback)
+// Connect to WebSockets for live ESP32 updates
 function initWebSocket() {
-  try {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${protocol}//${window.location.host}`);
 
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'INIT') {
-        alerts = msg.alerts || [];
-        guardsData = msg.guards || [];
-        renderAll();
-      } else if (msg.type === 'NEW_ALERT' || msg.type === 'PROBABILITY_ALERT_3TIER') {
-        addLocalAlert(msg.alert);
-        playAlertSound();
-      } else if (msg.type === 'ALERT_RESOLVED') {
-        const alert = alerts.find(a => a.id === msg.alert.id);
-        if (alert) {
-          alert.status = 'RESOLVED';
-          alert.resolvedAt = msg.alert.resolvedAt;
-          renderAll();
-        }
-      } else if (msg.type === 'GUARD_UPDATE') {
-        guardsData = msg.guards || [];
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === 'INIT') {
+      alerts = msg.alerts || [];
+      guardsData = msg.guards || [];
+      renderAll();
+    } else if (msg.type === 'NEW_ALERT' || msg.type === 'PROBABILITY_ALERT_3TIER') {
+      addLocalAlert(msg.alert);
+      playAlertSound();
+    } else if (msg.type === 'ALERT_RESOLVED') {
+      const alert = alerts.find(a => a.id === msg.alert.id);
+      if (alert) {
+        alert.status = 'RESOLVED';
+        alert.resolvedAt = msg.alert.resolvedAt;
         renderAll();
       }
-    };
-
-    ws.onerror = () => {
-      startPollingFallback();
-    };
-
-    ws.onclose = () => {
-      startPollingFallback();
-    };
-  } catch (e) {
-    startPollingFallback();
-  }
+    } else if (msg.type === 'ALL_ALERTS_RESOLVED') {
+      if (msg.alerts) alerts = msg.alerts;
+      else {
+        alerts.forEach(a => { a.status = 'RESOLVED'; });
+      }
+      if (msg.guards) guardsData = msg.guards;
+      renderAll();
+    } else if (msg.type === 'GUARD_UPDATE') {
+      guardsData = msg.guards || [];
+      renderAll();
+    }
+  };
 }
 
 // --- INIT APP ---

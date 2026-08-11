@@ -1,23 +1,19 @@
 /*
   =============================================================================
-  ESP32-C6 Zero — Standalone Direct Vercel Wi-Fi Location Tracker
+  ESP32-C6 Zero — Direct Terminal Nearest BSSID Printer & Tracker
   =============================================================================
   Hardware: ESP32-C6 Zero
   RGB LED:  Onboard WS2812 RGB LED on GPIO 8
   Buttons:  External Button on GPIO 20 & Onboard BOOT Button on GPIO 9
   
-  Function:
-    1. Instantly changes Onboard RGB LED Color on EVERY button press.
-    2. Scans campus VITBPL Access Points (BSSIDs, Signals).
-    3. Reconnects to VITBPL Enterprise Wi-Fi.
-    4. DIRECTLY POSTS HTTPS PAYLOAD TO VERCEL (https://cissecurity3ddashboard.vercel.app/api/sos)!
-    5. Fully standalone — NO LAPTOP OR PYTHON SCRIPT REQUIRED!
+  Uses HWCDCSerial (always available) to output over USB Serial/JTAG port.
+  Includes flush+delay after each print to prevent USB FIFO byte drops.
   =============================================================================
 */
 
 #include <WiFi.h>
-#include <HTTPClient.h>
 #include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "esp_wpa2.h"
 #include "esp_wifi.h"
@@ -48,7 +44,7 @@ const char* EAP_USERNAME = "25BAI10967";
 const char* EAP_PASSWORD = "e609oe";
 const char* WIFI_SSID    = "VITBPL";
 
-const char* SERVER_URL   = "https://cissecurity3ddashboard.vercel.app/api/sos";
+const char* SERVER_URL   = "https://vibrant-maxwell.vercel.app/api/sos";
 const char* DEVICE_ID    = "ESP32_C6_ZERO";
 
 unsigned long lastDebounceTime = 0;
@@ -87,7 +83,21 @@ void cycleNextLEDColor() {
   setRGB(r, g, b);
 }
 
-void connectToEnterpriseWiFi() {
+void setup() {
+  Serial.begin(115200);    // UART0 (hardware pins)
+  USBPort.begin(115200);   // USB Serial/JTAG -> goes to your terminal!
+  delay(2000);             // Extra time for USB CDC to initialize
+
+  pinMode(RGB_LED_PIN, OUTPUT);
+  setRGB(0, 0, 255); // BLUE on boot
+
+  usbPrintln("==================================================");
+  usbPrintln("   ESP32-C6 Zero Terminal Nearest BSSID Scanner");
+  usbPrintln("==================================================");
+
+  pinMode(EXT_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+
   WiFi.disconnect(true);
   WiFi.mode(WIFI_STA);
   delay(100);
@@ -107,40 +117,22 @@ void connectToEnterpriseWiFi() {
   WiFi.begin(WIFI_SSID);
 
   int retries = 0;
-  while (WiFi.status() != WL_CONNECTED && retries < 20) {
+  while (WiFi.status() != WL_CONNECTED && retries < 15) {
     delay(300);
     retries++;
   }
-}
-
-void setup() {
-  Serial.begin(115200);    // UART0
-  USBPort.begin(115200);   // USB Serial/JTAG
-  delay(2000);
-
-  pinMode(RGB_LED_PIN, OUTPUT);
-  setRGB(0, 0, 255); // BLUE on boot
-
-  usbPrintln("==================================================");
-  usbPrintln("   ESP32-C6 Zero Standalone Vercel Direct Tracker");
-  usbPrintln("==================================================");
-
-  pinMode(EXT_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
-
-  connectToEnterpriseWiFi();
 
   if (WiFi.status() == WL_CONNECTED) {
     setRGB(0, 255, 0); // GREEN
     usbPrintln("[OK] Connected to VITBPL Enterprise Wi-Fi!");
   } else {
     setRGB(255, 128, 0); // ORANGE
-    usbPrintln("[INFO] Wi-Fi Connecting...");
+    usbPrintln("[INFO] Wi-Fi Connecting... Serial Bridge Active.");
   }
 }
 
 void performLocationScan(int triggeredPin) {
-  char buf[160];
+  char buf[120];
 
   usbPrintln("");
   usbPrintln("======================================================================");
@@ -148,7 +140,7 @@ void performLocationScan(int triggeredPin) {
   usbPrintln(buf);
   usbPrintln("======================================================================");
 
-  // 1. Disconnect WiFi to free the radio for AP scanning
+  // Disconnect WiFi to free the radio for scanning
   WiFi.disconnect(true);
   delay(200);
   WiFi.mode(WIFI_STA);
@@ -167,7 +159,8 @@ void performLocationScan(int triggeredPin) {
   if (totalFound <= 0) {
     snprintf(buf, sizeof(buf), "No Wi-Fi networks found! (scanResult=%d)", totalFound);
     usbPrintln(buf);
-    connectToEnterpriseWiFi();
+    // Reconnect WiFi
+    WiFi.begin(WIFI_SSID);
     return;
   }
 
@@ -181,6 +174,7 @@ void performLocationScan(int triggeredPin) {
   JsonArray signals = doc.createNestedArray("signals");
 
   int vitbplCount = 0;
+
   String nearestBSSID = "";
   String nearestSSID  = "";
   int maxSignal = -999;
@@ -210,15 +204,13 @@ void performLocationScan(int triggeredPin) {
     }
   }
 
-  WiFi.scanDelete();
-
   if (vitbplCount == 0) {
     usbPrintln("No VITBPL Access Points detected in this scan.");
-    connectToEnterpriseWiFi();
+    WiFi.scanDelete();
     return;
   }
 
-  // TERMINAL DISPLAY OF NEAREST BSSID
+  // TERMINAL DISPLAY OF NEAREST BSSID DIRECTLY FROM ESP32
   usbPrintln("");
   usbPrintln(" NEAREST VITBPL ACCESS POINT (RANK 1):");
   usbPrintln(" --------------------------------------------------");
@@ -253,36 +245,69 @@ void performLocationScan(int triggeredPin) {
   usbPrint("ESP32_PAYLOAD:");
   usbPrintln(jsonPayload.c_str());
 
-  // 2. Reconnect to VITBPL Wi-Fi to send HTTPS POST directly to Vercel!
-  usbPrintln(" Reconnecting to VITBPL Enterprise Wi-Fi to POST to Vercel...");
-  connectToEnterpriseWiFi();
-
-  if (WiFi.status() == WL_CONNECTED) {
-    usbPrintln(" [OK] Wi-Fi Connected! Sending HTTPS POST to Vercel...");
-
-    WiFiClientSecure client;
-    client.setInsecure(); // Skip SSL cert check for Vercel HTTPS
-
-    HTTPClient http;
-    if (http.begin(client, SERVER_URL)) {
-      http.addHeader("Content-Type", "application/json");
-
-      int httpCode = http.POST(jsonPayload);
-      if (httpCode > 0) {
-        snprintf(buf, sizeof(buf), " SUCCESS! Posted directly to Vercel (HTTP %d)", httpCode);
-        usbPrintln(buf);
-        setRGB(0, 255, 0); // GREEN
-      } else {
-        snprintf(buf, sizeof(buf), " HTTPS POST Error: %s", http.errorToString(httpCode).c_str());
-        usbPrintln(buf);
-      }
-      http.end();
+  // Connect to phone hotspot for uploading (WPA2-PSK)
+  usbPrintln(" Connecting to hotspot 'triggy'...");
+  
+  // Full WiFi restart to clear Enterprise state
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  delay(500);
+  WiFi.mode(WIFI_STA);
+  delay(300);
+  
+  // Try connecting to hotspot with retries
+  bool connected = false;
+  for (int attempt = 0; attempt < 3 && !connected; attempt++) {
+    if (attempt > 0) {
+      snprintf(buf, sizeof(buf), " Hotspot retry %d/3...", attempt + 1);
+      usbPrintln(buf);
+      WiFi.disconnect();
+      delay(500);
     }
-  } else {
-    usbPrintln(" [WARN] Could not reconnect to Wi-Fi. (Serial bridge backup available).");
+    WiFi.begin("triggy", "pokemon2");
+    
+    // Wait up to 5 seconds per attempt
+    for (int i = 0; i < 17 && WiFi.status() != WL_CONNECTED; i++) {
+      delay(300);
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+      connected = true;
+    } else {
+      snprintf(buf, sizeof(buf), " WiFi status: %d (not connected)", WiFi.status());
+      usbPrintln(buf);
+    }
   }
 
-  usbPrintln("======================================================================\n");
+  if (connected) {
+    usbPrintln(" [OK] Hotspot connected! Sending to Vercel...");
+    WiFiClientSecure client;
+    client.setInsecure(); // Skip TLS cert verification
+    HTTPClient http;
+    http.begin(client, SERVER_URL);
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(10000);
+
+    int httpCode = http.POST(jsonPayload);
+    if (httpCode > 0) {
+      snprintf(buf, sizeof(buf), " HTTP %d — POST Success!", httpCode);
+      usbPrintln(buf);
+      String response = http.getString();
+      if (response.length() > 0 && response.length() < 500) {
+        usbPrint(" Server: ");
+        usbPrintln(response.c_str());
+      }
+    } else {
+      snprintf(buf, sizeof(buf), " HTTP POST Failed: %s", http.errorToString(httpCode).c_str());
+      usbPrintln(buf);
+    }
+    http.end();
+  } else {
+    usbPrintln(" [WARN] Hotspot 'triggy' not found — skipping POST");
+  }
+
+  WiFi.scanDelete();
+  usbPrintln("======================================================================");
 }
 
 void loop() {

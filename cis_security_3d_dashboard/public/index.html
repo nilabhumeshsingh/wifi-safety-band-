@@ -44,7 +44,10 @@
             </button>
           </div>
         </div>
-        <div id="active-count" class="count-pill">0 active</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button id="btn-resolve-all" class="btn-resolve-all" onclick="resolveAllAlerts()" title="Resolve all active alerts">✓ Resolve All</button>
+          <div id="active-count" class="count-pill">0 active</div>
+        </div>
       </div>
       <div id="alert-feed"></div>
     </div>

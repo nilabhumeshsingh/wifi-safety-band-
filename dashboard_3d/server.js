@@ -138,15 +138,8 @@ function getAllRoomFingerprints() {
   const fingerprints = [];
 
   // 1. Load from CSV if present
-  const csvCandidates = [
-    path.join(__dirname, 'data/wifi-mappings(8).csv'),
-    path.join(__dirname, '../wifi-mappings(8).csv'),
-    path.join(process.cwd(), 'data/wifi-mappings(8).csv'),
-    path.join(process.cwd(), 'wifi-mappings(8).csv')
-  ];
-  let csvPath = csvCandidates.find(p => fs.existsSync(p));
-
-  if (csvPath) {
+  const csvPath = path.join(__dirname, '../wifi-mappings(8).csv');
+  if (fs.existsSync(csvPath)) {
     try {
       const content = fs.readFileSync(csvPath, 'utf-8');
       const lines = content.split('\n');
@@ -191,17 +184,9 @@ function getAllRoomFingerprints() {
   }
 
   // 2. Load from mappings.json
-  const jsonCandidates = [
-    path.join(__dirname, 'data/mappings.json'),
-    path.join(__dirname, '../mapper/mappings.json'),
-    path.join(process.cwd(), 'data/mappings.json'),
-    path.join(process.cwd(), 'mapper/mappings.json')
-  ];
-  let jsonPath = jsonCandidates.find(p => fs.existsSync(p));
-
-  if (jsonPath) {
+  if (fs.existsSync(MAPPINGS_FILE)) {
     try {
-      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      const data = JSON.parse(fs.readFileSync(MAPPINGS_FILE, 'utf-8'));
       if (data.locations && Array.isArray(data.locations)) {
         for (const loc of data.locations) {
           const networks = {};
@@ -453,6 +438,30 @@ app.get('/api/alerts', (req, res) => {
   res.json({ alerts });
 });
 
+// HTTP API: Resolve all active alerts
+const handleResolveAll = (req, res) => {
+  const now = Date.now();
+  let count = 0;
+  alerts.forEach(a => {
+    if (a.status !== 'RESOLVED') {
+      a.status = 'RESOLVED';
+      a.resolvedAt = now;
+      count++;
+    }
+  });
+  guards.forEach(g => {
+    if (g.status === 'responding') {
+      g.status = 'available';
+      g.lastSeen = now;
+    }
+  });
+  broadcast({ type: 'ALL_ALERTS_RESOLVED', alerts, guards });
+  res.json({ success: true, count });
+};
+
+app.post('/api/alerts/resolve-all', handleResolveAll);
+app.patch('/api/alerts/resolve-all', handleResolveAll);
+
 // HTTP API: Resolve alert
 app.patch('/api/alerts/:id/resolve', (req, res) => {
   const alert = alerts.find(a => a.id === req.params.id);
@@ -504,13 +513,9 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ type: 'INIT', alerts, guards }));
 });
 
-if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`\n  ╔═════════════════════════════════════════════════════╗`);
-    console.log(`  ║   🛡️ CIS Security 3D Floor Map Dashboard          ║`);
-    console.log(`  ║   http://localhost:${PORT}                           ║`);
-    console.log(`  ╚═════════════════════════════════════════════════════╝\n`);
-  });
-}
-
-module.exports = app;
+server.listen(PORT, () => {
+  console.log(`\n  ╔═════════════════════════════════════════════════════╗`);
+  console.log(`  ║   🛡️ CIS Security 3D Floor Map Dashboard          ║`);
+  console.log(`  ║   http://localhost:${PORT}                           ║`);
+  console.log(`  ╚═════════════════════════════════════════════════════╝\n`);
+});

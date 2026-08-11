@@ -33,8 +33,21 @@
     <!-- TOP SECTION: ALERTS -->
     <div class="card">
       <div class="top-row">
-        <div class="section-title">Active Alerts Feed</div>
-        <div id="active-count" class="count-pill">0 active</div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div class="section-title">Active Alerts Feed</div>
+          <div class="view-segmented-control">
+            <button id="alert-tab-recent" class="segmented-btn active" onclick="toggleAlertHistoryMode(false)">
+              ⚡ Recent (5)
+            </button>
+            <button id="alert-tab-history" class="segmented-btn" onclick="toggleAlertHistoryMode(true)">
+              📜 Full History (<span id="history-total-count">0</span>)
+            </button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button id="btn-resolve-all" class="btn-resolve-all" onclick="resolveAllAlerts()" title="Resolve all active alerts">✓ Resolve All</button>
+          <div id="active-count" class="count-pill">0 active</div>
+        </div>
       </div>
       <div id="alert-feed"></div>
     </div>

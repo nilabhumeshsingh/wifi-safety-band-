@@ -160,6 +160,32 @@ header {
   border: 1px solid rgba(255, 59, 48, 0.2);
 }
 
+.btn-resolve-all {
+  font-size: 13px;
+  font-weight: 600;
+  color: #34C759;
+  background: var(--green-soft, #EAFBF0);
+  padding: 6px 14px;
+  border-radius: 980px;
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-resolve-all:hover {
+  background: #D4F7DF;
+  border-color: #34C759;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(52, 199, 89, 0.15);
+}
+
+.btn-resolve-all:active {
+  transform: translateY(0);
+}
+
 /* Segmented Control (Apple Light Toggle) */
 .view-segmented-control {
   display: flex;

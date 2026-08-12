@@ -192,23 +192,7 @@ app.get('/api/stream', (req, res) => {
     });
 });
 
-// ─── GET /api/sos/active ─────────────────────────────────────────────────────
-app.get('/api/sos/active', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('sos_events')
-            .select('*')
-            .in('status', ['open', 'acknowledged'])
-            .order('triggered_at', { ascending: false })
-            .limit(20);
 
-        if (error) throw error;
-        res.json({ success: true, events: data });
-    } catch (err) {
-        console.error('[GET /api/sos/active]', err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // ─── POST /api/locate ────────────────────────────────────────────────────────
 // ESP32-C6 Zero posts here on long-press of GPIO 20.

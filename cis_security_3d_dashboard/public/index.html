@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIS Security - 3D Interactive Floor Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<!-- Three.js + OrbitControls for 3D Vector Rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="logo.png" alt="CIS Security" class="brand-logo">
+    <div>
+      <div class="brand-name">CIS Security</div>
+      <div class="brand-sub">3rd & 4th Floor Campus Plan (AB2)</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-primary" onclick="simulateSOS()">Simulate SOS</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout-stack">
+    
+    <!-- TOP SECTION: ALERTS -->
+    <div class="card">
+      <div class="top-row">
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div class="section-title">Active Alerts Feed</div>
+          <div class="view-segmented-control">
+            <button id="alert-tab-recent" class="segmented-btn active" onclick="toggleAlertHistoryMode(false)">
+              ⚡ Recent (5)
+            </button>
+            <button id="alert-tab-history" class="segmented-btn" onclick="toggleAlertHistoryMode(true)">
+              📜 Full History (<span id="history-total-count">0</span>)
+            </button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button id="btn-resolve-all" class="btn-resolve-all" onclick="resolveAllAlerts()" title="Resolve all active alerts">✓ Resolve All</button>
+          <div id="active-count" class="count-pill">0 active</div>
+        </div>
+      </div>
+      <div id="alert-feed"></div>
+    </div>
+
+    <!-- GUARDS ON DUTY PANEL -->
+    <div class="card">
+      <div class="top-row">
+        <div class="section-title">Guards on Duty</div>
+        <div id="guards-summary" class="guards-summary-pill">0 available</div>
+      </div>
+      <div id="guards-panel"></div>
+    </div>
+
+    <!-- BOTTOM SECTION: ENTIRE FLOOR PLAN LAYOUT (2D / 3D INTEGRATED) -->
+    <div class="card">
+      <div class="top-row">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div class="section-title">Floor Map Overview</div>
+          <!-- VIEW TOGGLE: 3D VECTOR MAP vs 2D GRID -->
+          <div class="view-segmented-control">
+            <button id="tab-3d" class="segmented-btn active" onclick="switchView('3d')">
+              <span class="icon">🧊</span> 3D Vector Map
+            </button>
+            <button id="tab-2d" class="segmented-btn" onclick="switchView('2d')">
+              <span class="icon">📐</span> 2D Grid
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D TOOLBAR CONTROLS -->
+        <div id="3d-toolbar" class="toolbar-3d">
+          <div class="view-segmented-control" style="margin-right: 8px;">
+            <button id="btn-fl-all" class="segmented-btn active" onclick="filterFloor('all')">🏢 Both Floors</button>
+            <button id="btn-fl-4" class="segmented-btn" onclick="filterFloor('4')">⬆️ 4th Floor</button>
+            <button id="btn-fl-3" class="segmented-btn" onclick="filterFloor('3')">⬇️ 3rd Floor</button>
+          </div>
+          <button class="tool-btn" onclick="focusActiveAlert()" title="Focus Camera on Active Alert">🎯 Focus Alert</button>
+          <button class="tool-btn" onclick="toggleWallHeight()" title="Toggle Wall Height">🧱 Walls: <span id="wall-height-label">Full</span></button>
+          <button class="tool-btn" onclick="toggleWireframe()" title="Wireframe View">🕸️ Wireframe</button>
+          <button class="tool-btn" onclick="reset3DCamera()" title="Reset View">🎥 Reset View</button>
+        </div>
+      </div>
+
+      <!-- 3D VECTOR CANVAS CONTAINER -->
+      <div id="view-3d-container" class="map-wrapper-3d">
+        <div id="canvas-container-3d"></div>
+        
+        <!-- 3D HUD OVERLAY -->
+        <div class="hud-overlay">
+          <div class="hud-pill">🖱️ Drag to rotate · Right-click/Shift to pan · Scroll to zoom</div>
+          <div id="selected-room-hud" class="hud-room-info" style="display: none;">
+            <div id="hud-room-title" class="hud-room-title">Room 418</div>
+            <div id="hud-room-meta" class="hud-room-meta">Status: Clear</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2D FLOOR PLAN GRID LAYOUT (ORIGINAL ARCHITECTURE) -->
+      <div id="view-2d-container" class="map-wrapper" style="display: none;">
+        <div class="floor-grid">
+
+          <!-- Row 1: Top Section -->
+          <div class="nw-wing">
+            <div class="room utility" data-room-id="401">401<br><small>Stairs</small></div>
+            <div class="room" data-room-id="402">402</div>
+          </div>
+          
+          <div class="room corridor-hall top-corridor">MAIN CORRIDOR</div>
+
+          <div class="ne-wing">
+            <div class="room" data-room-id="403" style="flex:1;">403</div>
+            <div class="room" data-room-id="404" style="flex:1;">404</div>
+          </div>
+
+          <!-- Row 2: Middle Wings & Courtyard -->
+          <div class="west-corridor">
+            <div class="room" data-room-id="430">430</div>
+            <div class="room" data-room-id="429">429</div>
+            <div class="room" data-room-id="428">428</div>
+            <div class="room" data-room-id="427">427</div>
+            <div class="room utility" data-room-id="gw">Girls Washroom</div>
+          </div>
+
+          <div class="room courtyard courtyard-area">CENTRAL OPEN COURTYARD</div>
+
+          <div class="east-corridor">
+            <div class="room utility" data-room-id="faculty-e">Faculty</div>
+            <div class="room" data-room-id="408">408</div>
+            <div class="room" data-room-id="409">409</div>
+            <div style="display:flex; gap:8px;">
+              <div class="room utility" data-room-id="410" style="flex:1;">410<br><small>Faculty</small></div>
+              <div class="room utility" data-room-id="mw" style="flex:1;">Men's Washroom</div>
+            </div>
+          </div>
+
+          <!-- Row 3: South Corridor Level -->
+          <div class="south-corridor">
+            <div class="room" data-room-id="420" style="flex:1;">420</div>
+            <div class="room" data-room-id="419" style="flex:1;">419</div>
+            <div class="room" data-room-id="418" style="flex:1;">418</div>
+            <div class="room" data-room-id="417" style="flex:1;">417</div>
+          </div>
+
+          <!-- Row 4: Bottom Wings -->
+          <div class="sw-bottom">
+            <div class="room utility" data-room-id="st-w" style="flex:0.8;">Stairs</div>
+            <div class="room" data-room-id="423" style="flex:1;">423</div>
+            <div class="room" data-room-id="422" style="flex:1;">422</div>
+            <div class="room" data-room-id="421" style="flex:1;">421</div>
+          </div>
+
+          <div style="grid-column: 4 / 10;"></div> <!-- Gap under south corridor -->
+
+          <div class="se-bottom">
+            <div class="room" data-room-id="416" style="flex:1;">416</div>
+            <div class="room" data-room-id="415" style="flex:1;">415</div>
+            <div class="room" data-room-id="414" style="flex:1;">414</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="app3d.js"></script>
+</body>
+</html>

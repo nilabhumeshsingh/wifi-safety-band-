@@ -11,6 +11,12 @@
   =============================================================================
 */
 
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include "esp_wpa2.h"
+#include "esp_wifi.h"
+#include "HWCDC.h"
 
 // Create our own HWCDC instance for USB Serial/JTAG output
 HWCDC USBPort;

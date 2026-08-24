@@ -1,0 +1,14 @@
+{
+  "name": "wifi-safety-band",
+  "version": "1.0.0",
+  "description": "CIS Security 3D Vector Map Dashboard & Geolocation Engine",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node cis_security_3d_dashboard/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}

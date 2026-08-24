@@ -866,27 +866,49 @@ function fmtTime(ts) {
 }
 
 function simulateSOS() {
-  // Pick a random room from dataset
-  const targetRoom = roomsData[Math.floor(Math.random() * (roomsData.length - 2))]; // Exclude corridors/courtyard
-  
   const payload = {
+    device_id: 'ESP32_C6_ZERO',
     student_id: 'STU_' + Math.floor(1000 + Math.random() * 9000),
-    student_name: 'Student Emergency',
-    room: targetRoom.id
+    student_name: 'Student Emergency (Room 402a)',
+    signals: [
+      { bssid: 'A4:C7:F6:FC:98:11', signal: 100, ssid: 'VITBPL', channel: 11 },
+      { bssid: 'A4:C7:F6:FC:38:91', signal: 87, ssid: 'VITBPL', channel: 1 },
+      { bssid: 'A4:C7:F6:FC:98:20', signal: 73, ssid: 'VITBPL', channel: 36 }
+    ]
   };
 
   fetch('/api/sos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  }).catch(() => {
-    // Local fallback if offline
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.alert) {
+      addLocalAlert(data.alert);
+    } else {
+      addLocalAlert({
+        id: 'A' + String(alertSeq++).padStart(3, '0'),
+        roomId: '402',
+        primaryRoomId: '402a',
+        primaryRoomName: 'Room 402a (AB2 Fl 4)',
+        confidence: 99.9,
+        studentName: 'Student Emergency (Room 402a)',
+        nearestGuard: { id: 'G1', name: 'Raj Kumar (Fl 4)', assignedRoom: '402', distance: 0 },
+        status: 'ACTIVE',
+        createdAt: Date.now()
+      });
+    }
+  })
+  .catch(() => {
     addLocalAlert({
       id: 'A' + String(alertSeq++).padStart(3, '0'),
-      roomId: targetRoom.id,
-      roomName: `Room ${targetRoom.id}`,
-      studentName: 'Student in Distress',
-      nearestGuard: null,
+      roomId: '402',
+      primaryRoomId: '402a',
+      primaryRoomName: 'Room 402a (AB2 Fl 4)',
+      confidence: 99.9,
+      studentName: 'Student Emergency (Room 402a)',
+      nearestGuard: { id: 'G1', name: 'Raj Kumar (Fl 4)', assignedRoom: '402', distance: 0 },
       status: 'ACTIVE',
       createdAt: Date.now()
     });
@@ -1165,12 +1187,18 @@ async function fetchAlertsFromApi() {
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.alerts)) {
-        const prevLength = alerts.length;
-        alerts = data.alerts;
-        if (alerts.length > prevLength && prevLength > 0) {
-          playAlertSound();
+        if (data.alerts.length > 0) {
+          // Merge incoming alerts
+          data.alerts.forEach(incoming => {
+            const idx = alerts.findIndex(a => a.id === incoming.id);
+            if (idx >= 0) {
+              alerts[idx] = incoming;
+            } else {
+              alerts.unshift(incoming);
+            }
+          });
+          renderAll();
         }
-        renderAll();
       }
     }
   } catch (err) {

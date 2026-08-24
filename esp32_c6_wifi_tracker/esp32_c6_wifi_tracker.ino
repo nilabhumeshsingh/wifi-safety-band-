@@ -44,7 +44,7 @@ const char* EAP_USERNAME = "25BAI10967";
 const char* EAP_PASSWORD = "e609oe";
 const char* WIFI_SSID    = "VITBPL";
 
-const char* SERVER_URL   = "https://vibrant-maxwell.vercel.app/api/sos";
+const char* SERVER_URL   = "https://cissecurity3ddashboard.vercel.app/api/sos";
 const char* DEVICE_ID    = "ESP32_C6_ZERO";
 
 unsigned long lastDebounceTime = 0;
@@ -187,7 +187,7 @@ void performLocationScan(int triggeredPin) {
     int signalPercent = rssiToPercentage(WiFi.RSSI(i));
     int channel       = WiFi.channel(i);
 
-    if (ssid.indexOf("VITBPL") >= 0 || ssid.indexOf("vitbpl") >= 0 || bssid.startsWith("68:28:CF")) {
+    if (ssid.indexOf("VITBPL") >= 0 || ssid.indexOf("vitbpl") >= 0 || bssid.startsWith("68:28:CF") || bssid.startsWith("A4:C7:F6") || bssid.startsWith("4C:23:1A")) {
       vitbplCount++;
       JsonObject net = signals.createNestedObject();
       net["ssid"]   = ssid;

@@ -189,45 +189,80 @@
       "networks": [
         {
           "ssid": "VITBPL",
-          "bssid": "68:28:CF:63:1D:00",
+          "bssid": "A4:C7:F6:FC:98:11",
+          "signal": 100,
+          "channel": 11,
+          "frequency": "2462 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:38:91",
+          "signal": 87,
+          "channel": 1,
+          "frequency": "2412 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:98:20",
+          "signal": 73,
+          "channel": 36,
+          "frequency": "5180 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FB:FA:11",
           "signal": 35,
+          "channel": 11,
+          "frequency": "2462 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:A4:D1",
+          "signal": 32,
+          "channel": 1,
+          "frequency": "2412 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:A0:D1",
+          "signal": 29,
+          "channel": 1,
+          "frequency": "2412 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "4C:23:1A:00:92:91",
+          "signal": 29,
+          "channel": 11,
+          "frequency": "2462 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:1D:11",
+          "signal": 24,
+          "channel": 1,
+          "frequency": "2412 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "A4:C7:F6:FC:3A:51",
+          "signal": 24,
           "channel": 6,
           "frequency": "2437 MHz"
         },
         {
           "ssid": "VITBPL",
-          "bssid": "68:28:CF:76:CD:20",
-          "signal": 34,
-          "channel": 1,
-          "frequency": "2412 MHz"
-        },
-        {
-          "ssid": "VITBPL",
-          "bssid": "68:28:CF:63:BA:20",
-          "signal": 33,
-          "channel": 1,
-          "frequency": "2412 MHz"
-        },
-        {
-          "ssid": "VITBPL",
-          "bssid": "68:28:CF:63:1D:10",
-          "signal": 27,
-          "channel": 52,
-          "frequency": "5260 MHz"
-        },
-        {
-          "ssid": "VITBPL",
-          "bssid": "68:28:CF:76:CD:30",
-          "signal": 24,
-          "channel": 116,
-          "frequency": "5580 MHz"
-        },
-        {
-          "ssid": "VITBPL",
-          "bssid": "68:28:CF:63:BA:30",
+          "bssid": "A4:C7:F6:FB:E5:D1",
           "signal": 22,
-          "channel": 149,
-          "frequency": "5745 MHz"
+          "channel": 11,
+          "frequency": "2462 MHz"
+        },
+        {
+          "ssid": "VITBPL",
+          "bssid": "4C:23:1A:00:90:51",
+          "signal": 22,
+          "channel": 11,
+          "frequency": "2462 MHz"
         }
       ],
       "scannedAt": "2026-07-30T10:23:20.600Z"

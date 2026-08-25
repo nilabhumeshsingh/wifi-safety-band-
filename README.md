@@ -1,4 +1,4 @@
-# 🛡️ Assistive Safety Band
+# 🛡️ WiFi Safety Band — Assistive Safety Band
 
 > A low-power wearable wristband for students. One long press of a button sends an instant SOS alert with your indoor location to campus security.
 
@@ -18,51 +18,62 @@ When a student feels unsafe, they **long-press one button** on the band. The dev
 
 ---
 
-## 🎯 Why we built this
+## 🎯 Why We Built This
 
-- **GPS doesn't work well indoors** — dorms, lecture halls, and basements block satellite signals
-- **Using a phone in an emergency is slow** — you have to unlock it, open an app, and wait for GPS
-- **Students walk alone at night** and need a fast, simple way to call for help
-- **Existing solutions are expensive** or need complex setup
+| Problem | Why It Matters |
+|---------|---------------|
+| **GPS fails indoors** | Dorms, lecture halls, and basements have weak or no satellite signal |
+| **Smartphone SOS is too slow** | Unlocking, opening apps, and waiting for GPS takes too long in emergencies |
+| **Students walk alone at night** | Real safety risks with no instant alert mechanism |
+| **Existing solutions are expensive** | Bulky hardware, complex setup, and pairing required |
 
-Our band solves this with **one button press**.
-
----
-
-## 🔧 What's inside the band?
-
-| Part | What it does |
-|------|-------------|
-| **ESP32** | The brain — scans Wi-Fi and sends data over the internet |
-| **LiPo Battery** | Rechargeable battery that powers the device |
-| **TP4056 Charging Module** | Lets you charge the battery with USB-C |
-| **SOS Button** | Long-press to trigger an emergency alert |
-| **Leather Strap** | Comfortable wristband to wear all day |
+Our band solves this with **one button press** — no setup, no apps, no GPS.
 
 ---
 
-## ⚙️ How it works
+## 🔧 Hardware
 
-```
-Student long-presses SOS button
-        ↓
-ESP32 quickly scans nearby Wi-Fi networks (BSSIDs)
-        ↓
-Device sends Wi-Fi data to our cloud server
-        ↓
-Server matches Wi-Fi signals to a campus map
-        ↓
-Exact location appears on the security dashboard instantly
-```
+| Component | Purpose |
+|-----------|---------|
+| **ESP32 Wi-Fi Module** | The brain — scans Wi-Fi BSSIDs and sends data over HTTP |
+| **Rechargeable LiPo Battery** | 5–7W capacity for all-day wear |
+| **TP4056 USB-C Charging Module** | Easy recharging via USB-C |
+| **Tactile Push Button** | Long-press SOS trigger (prevents false alarms from accidental bumps) |
+| **Custom Leather Wristband** | Comfortable, durable strap for daily use |
 
-### Why Wi-Fi instead of GPS?
+### Why Wi-Fi Instead of GPS?
 
 | Wi-Fi Scanning | GPS |
-|---------------|-----|
+|----------------|-----|
 | Works **instantly** indoors | Takes 30–60 seconds to find satellites |
 | Uses **very little battery** | Drains battery quickly |
 | Works **inside buildings** | Often fails in dorms and halls |
 | **No sky view needed** | Needs clear view of the sky |
+
+---
+
+## ⚙️ How It Works
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Long-Press SOS │────▶│  ESP32 Scans     │────▶│  JSON Payload   │
+│  Button         │     │  Wi-Fi BSSIDs    │     │  HTTP POST      │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                                          │
+                                                          ▼
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  React Dashboard│◀────│  Supabase Stores │◀────│  Backend        │
+│  (3D Floor Map) │     │  Alert           │     │  Resolves Room  │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+```
+
+### Step-by-Step Flow
+
+1. **Trigger Phase** — Student long-presses the tactile SOS button (prevents false alarms from accidental bumps)
+2. **Wi-Fi BSSID Scanning** — ESP32 passively scans 2.4GHz Wi-Fi networks, capturing MAC addresses (BSSIDs) and signal levels — no GPS needed
+3. **Packet Transmission** — Scan results formatted as JSON and sent via HTTP POST over campus Wi-Fi directly to backend
+4. **Location Resolution** — Backend cross-references BSSIDs against pre-mapped campus lookup table to determine exact building/floor/zone
+5. **Live Dashboard Update** — Resolved alert (location, timestamp, student ID) pushed to React monitoring dashboard for security staff
 
 ---
 
@@ -75,7 +86,11 @@ Security staff can see all alerts on a real-time web dashboard:
 - 📊 **Active alerts feed** — list of all ongoing emergencies
 - 👮 **Guard status** — see which guards are available
 
-🔗 **Live Demo:** [cissecurity3ddashboard.vercel.app](https://cissecurity3ddashboard.vercel.app/)
+  <img width="438" height="636" alt="Screenshot 2026-08-25 at 7 49 00 PM" src="https://github.com/user-attachments/assets/02dda1ad-4b50-441c-a4a7-b338aa2470e6" />
+<img width="438" height="636" alt="Screenshot 2026-08-25 at 7 49 00 PM" src="https://github.com/user-attachments/assets/2ede6a7f-301e-4bea-942f-e5d673273cd6" />
+
+
+🔗 **Live Demo:** [cissecurity3ddashboard.vercel.app](https://cissecurity3ddashboard.vercel.app)
 
 ---
 
@@ -88,30 +103,70 @@ Security staff can see all alerts on a real-time web dashboard:
 - Tactile push button
 - Custom leather wristband
 
-### Software
-- **Firmware:** C++ (Arduino framework)
-- **Frontend:** React.js (3D interactive dashboard)
-- **Backend:** Node.js + Express.js + FastAPI
+### Firmware
+- **Language:** C++ / Arduino Framework
+- **Libraries:** `WiFi.h`, `HTTPClient.h`
+- **Features:** Low-power idle state logic
+
+### Cloud & Web
+- **Frontend:** React.js (3D Interactive Floor Layout)
+- **Backend:** Node.js + Express.js
+- **Microservice:** FastAPI
 - **Database:** Supabase
 - **Hosting:** Vercel
+
+---
+
+## 🗄️ Database Schema
+
+### `sos_events`
+Stores every SOS alert triggered by a device.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | `int8` (PK) | Unique alert ID |
+| `device_id` | `text` | Identifier of the triggering device |
+| `triggered_at` | `timestamptz` | Exact timestamp of the alert |
+| `scan_data` | `jsonb` | Raw Wi-Fi scan results (BSSIDs + signal strengths) |
+| `resolved_room` | `text` | Matched room/zone from fingerprint lookup |
+| `confidence` | `float8` | Match confidence score |
+| `status` | `text` | Alert status (e.g., `active`, `resolved`, `false_alarm`) |
+
+### `wifi_fingerprints`
+Pre-mapped Wi-Fi signature database for indoor localization.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `Room` | `text` | Room name/number |
+| `Building` | `text` | Building identifier |
+| `Floor` | `int8` | Floor number |
+| `Description` | `text` | Human-readable location description |
+| `ScannedAt` | `text` | When the fingerprint was recorded |
+| `WiFi_Signals` | `text` | Serialized signal data |
+| `bssid` | `text` | Wi-Fi access point MAC address |
+| `room_no` | `text` | Room number (alternative) |
+| `signal_percent` | `int8` | Signal strength as percentage |
+| `building` | `text` | Building name (alternative) |
+| `floor` | `text` | Floor label (alternative) |
+| `description` | `text` | Additional notes |
 
 ---
 
 ## 📸 Prototype Photos
 
 | Front View | Back View |
-|-----------|-----------|
+|------------|-----------|
 | ESP32 + charging module on leather strap | LiPo battery and wiring |
 
 | Component Layout | Worn on Wrist |
-|-----------------|---------------|
+|------------------|---------------|
 | Wired integration of all parts | Real-world size and comfort test |
 
 *(See the `images/` folder or the project photos above)*
 
 ---
 
-## ✅ What's good about it?
+## ✅ What's Good About It?
 
 - ⚡ **Super fast** — location shared in under 2 seconds
 - 🔋 **Long battery life** — no GPS means the battery lasts much longer
@@ -121,9 +176,34 @@ Security staff can see all alerts on a real-time web dashboard:
 
 ---
 
+## 🌍 Impact & Benefits
+
+### Social Impact
+- Instant emergency response for students walking alone
+- Reduces anxiety and improves sense of campus safety
+- Accessible design — no smartphone literacy required
+- Empowers vulnerable groups (night-shift students, freshmen)
+- Creates data-driven safety insights for campus security
+
+### Economic Impact
+- Low per-unit cost enables mass deployment
+- Reduces liability costs for universities
+- No recurring subscription or cellular fees
+- Minimal IT infrastructure investment needed
+- Scalable to other institutions with same stack
+
+### Environmental Impact
+- Rechargeable LiPo battery reduces e-waste
+- Low power consumption vs GPS alternatives
+- Minimal hardware — small carbon footprint
+- Durable leather strap for long product life
+- No disposable batteries or single-use components
+
+---
+
 ## ⚠️ Known Limitations
 
-| Problem | Why it happens | Our plan to fix it |
+| Problem | Why It Happens | Our Plan to Fix It |
 |---------|---------------|-------------------|
 | Needs Wi-Fi coverage | Sends data over Wi-Fi | Pre-configure multiple networks; add repeaters in dead zones |
 | Only works indoors | No GPS chip yet | Add a small GPS module for outdoor areas |
@@ -147,15 +227,15 @@ Security staff can see all alerts on a real-time web dashboard:
 | Link | URL |
 |------|-----|
 | 🔗 GitHub Repo | [github.com/nilabhumeshsingh/wifi-safety-band-](https://github.com/nilabhumeshsingh/wifi-safety-band-) |
-| 🌐 Live Dashboard | [cissecurity3ddashboard.vercel.app](https://cissecurity3ddashboard.vercel.app/) |
+| 🌐 Live Dashboard | [cissecurity3ddashboard.vercel.app]([https://cissecurity3ddashboard.vercel.app](https://vibrant-maxwell.vercel.app)) |
 
 ---
 
 ## 🏆 About This Project
 
 - **Theme:** Open Innovation
-- **Team:** N/A
 - **Event:** International Innovation Challenge 2026
+- **Team:** N/A
 
 > *"One Touch. Instant Alert. Real Safety."*
 

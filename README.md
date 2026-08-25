@@ -162,7 +162,7 @@ Pre-mapped Wi-Fi signature database for indoor localization.
 |------------|-----------|
 | ESP32 + charging module on leather strap | LiPo battery and wiring |
 
-<img width="559" height="521" alt="Screenshot 2026-08-11 at 8 30 58 PM" src="https://github.com/user-attachments/assets/de64019c-6d3f-4d5e-8ac0-5128ccc8f7b0" />
+<img width="559/2" height="521/2" alt="Screenshot 2026-08-11 at 8 30 58 PM" src="https://github.com/user-attachments/assets/de64019c-6d3f-4d5e-8ac0-5128ccc8f7b0" />
 
 
 | Component Layout | Worn on Wrist |

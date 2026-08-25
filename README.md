@@ -86,8 +86,9 @@ Security staff can see all alerts on a real-time web dashboard:
 - 📊 **Active alerts feed** — list of all ongoing emergencies
 - 👮 **Guard status** — see which guards are available
 
-  <img width="438" height="636" alt="Screenshot 2026-08-25 at 7 49 00 PM" src="https://github.com/user-attachments/assets/02dda1ad-4b50-441c-a4a7-b338aa2470e6" />
-<img width="438" height="636" alt="Screenshot 2026-08-25 at 7 49 00 PM" src="https://github.com/user-attachments/assets/2ede6a7f-301e-4bea-942f-e5d673273cd6" />
+<img width="1393" height="798" alt="Screenshot 2026-08-25 at 7 47 39 PM" src="https://github.com/user-attachments/assets/143dba48-bdfa-4ec9-bea2-280c72df1cfc" />
+<img width="1409" height="804" alt="Screenshot 2026-08-25 at 7 47 45 PM" src="https://github.com/user-attachments/assets/d3355d8f-6c59-41ed-beba-f3a8b36f1d19" />
+
 
 
 🔗 **Live Demo:** [cissecurity3ddashboard.vercel.app](https://cissecurity3ddashboard.vercel.app)
@@ -150,6 +151,9 @@ Pre-mapped Wi-Fi signature database for indoor localization.
 | `floor` | `text` | Floor label (alternative) |
 | `description` | `text` | Additional notes |
 
+<img width="1369" height="767" alt="Screenshot 2026-08-25 at 7 48 26 PM" src="https://github.com/user-attachments/assets/b020ea5d-b61e-49c9-a7cf-d965a41f4a23" />
+
+
 ---
 
 ## 📸 Prototype Photos
@@ -158,11 +162,15 @@ Pre-mapped Wi-Fi signature database for indoor localization.
 |------------|-----------|
 | ESP32 + charging module on leather strap | LiPo battery and wiring |
 
+<img width="559" height="521" alt="Screenshot 2026-08-11 at 8 30 58 PM" src="https://github.com/user-attachments/assets/de64019c-6d3f-4d5e-8ac0-5128ccc8f7b0" />
+
+
 | Component Layout | Worn on Wrist |
 |------------------|---------------|
 | Wired integration of all parts | Real-world size and comfort test |
 
-*(See the `images/` folder or the project photos above)*
+<img width="287" height="795" alt="Screenshot 2026-08-11 at 8 31 08 PM" src="https://github.com/user-attachments/assets/24d18100-b93e-4ed4-8aaf-0fc801d568a4" />
+
 
 ---
 

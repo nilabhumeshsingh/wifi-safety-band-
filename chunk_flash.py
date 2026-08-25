@@ -6,7 +6,7 @@ reconnecting between chunks to avoid USB disconnect.
 """
 import subprocess, sys, os, time, glob
 
-BINARY = "/home/aditya/.cache/arduino/sketches/D3BB6196284EBE47471DE0CA7DF48D77/esp32_c6_wifi_tracker.ino.bin"
+BINARY = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cache/arduino/sketches/D3BB6196284EBE47471DE0CA7DF48D77/esp32_c6_wifi_tracker.ino.bin")
 BASE_ADDR = 0x10000
 CHUNK_SIZE = 64 * 1024  # 64KB chunks
 TEMP_DIR = "/tmp/esp32_chunks"

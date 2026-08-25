@@ -86,8 +86,8 @@ Security staff can see all alerts on a real-time web dashboard:
 - 📊 **Active alerts feed** — list of all ongoing emergencies
 - 👮 **Guard status** — see which guards are available
 
-<img width="1393" height="798" alt="Screenshot 2026-08-25 at 7 47 39 PM" src="https://github.com/user-attachments/assets/143dba48-bdfa-4ec9-bea2-280c72df1cfc" />
-<img width="1409" height="804" alt="Screenshot 2026-08-25 at 7 47 45 PM" src="https://github.com/user-attachments/assets/d3355d8f-6c59-41ed-beba-f3a8b36f1d19" />
+<img width="1393/2" height="798/2" alt="Screenshot 2026-08-25 at 7 47 39 PM" src="https://github.com/user-attachments/assets/143dba48-bdfa-4ec9-bea2-280c72df1cfc" />
+<img width="1409/2" height="804/2" alt="Screenshot 2026-08-25 at 7 47 45 PM" src="https://github.com/user-attachments/assets/d3355d8f-6c59-41ed-beba-f3a8b36f1d19" />
 
 
 

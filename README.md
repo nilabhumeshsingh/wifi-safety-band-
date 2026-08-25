@@ -235,7 +235,7 @@ Pre-mapped Wi-Fi signature database for indoor localization.
 | Link | URL |
 |------|-----|
 | 🔗 GitHub Repo | [github.com/nilabhumeshsingh/wifi-safety-band-](https://github.com/nilabhumeshsingh/wifi-safety-band-) |
-| 🌐 Live Dashboard | [cissecurity3ddashboard.vercel.app]([https://cissecurity3ddashboard.vercel.app](https://vibrant-maxwell.vercel.app)) |
+| 🌐 Live Dashboard | [https://vibrant-maxwell.vercel.app/](https://vibrant-maxwell.vercel.app/) |
 
 ---
 

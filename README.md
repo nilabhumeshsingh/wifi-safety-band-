@@ -249,6 +249,4 @@ Pre-mapped Wi-Fi signature database for indoor localization.
 
 ---
 
-## 📄 License
 
-[Add your license here — e.g., MIT]

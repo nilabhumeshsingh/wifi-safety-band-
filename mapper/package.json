@@ -1,0 +1,13 @@
+{
+  "name": "wifi-signal-mapper",
+  "version": "1.0.0",
+  "description": "Campus WiFi signal mapper for BSSID-to-location mapping",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
